@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://de55kuj1ermod"]
+
+[ext_resource type="Script" path="res://Scenes/Main/main.cs" id="1_ljqy4"]
+
+[node name="Main" type="Node3D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+scale = Vector2(20, 20)
+centered = false
+script = ExtResource("1_ljqy4")
