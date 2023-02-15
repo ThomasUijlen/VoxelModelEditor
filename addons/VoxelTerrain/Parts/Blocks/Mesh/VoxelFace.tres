@@ -1,0 +1,38 @@
+[gd_resource type="ArrayMesh" load_steps=3 format=3 uid="uid://dru57exh8delc"]
+
+[sub_resource type="Shader" id="Shader_yapsx"]
+code = "// NOTE: Shader automatically converted from Godot Engine 4.0.rc1.mono's StandardMaterial3D.
+
+shader_type spatial;
+render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx;
+uniform sampler2D textureAtlas : source_color,filter_nearest,repeat_enable;
+
+void vertex() {
+	UV = UV * INSTANCE_CUSTOM.b + INSTANCE_CUSTOM.rg;
+}
+
+void fragment() {
+	vec4 tex = texture(textureAtlas, UV);
+	ALBEDO = tex.rgb;
+	ALPHA = tex.a;
+	ALPHA_SCISSOR_THRESHOLD = 0.5;
+}
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_p7m0j"]
+render_priority = 0
+shader = SubResource("Shader_yapsx")
+
+[resource]
+_surfaces = [{
+"aabb": AABB(-0.5, 0.5, -0.5, 1, 1.00136e-05, 1),
+"attribute_data": PackedByteArray(114, 249, 127, 63, 114, 249, 127, 63, 23, 183, 209, 56, 114, 249, 127, 63, 114, 249, 127, 63, 23, 183, 209, 56, 23, 183, 209, 56, 23, 183, 209, 56),
+"format": 4119,
+"index_count": 6,
+"index_data": PackedByteArray(0, 0, 1, 0, 2, 0, 2, 0, 1, 0, 3, 0),
+"material": SubResource("ShaderMaterial_p7m0j"),
+"name": "Material",
+"primitive": 3,
+"vertex_count": 4,
+"vertex_data": PackedByteArray(0, 0, 0, 191, 0, 0, 0, 63, 0, 0, 0, 191, 255, 127, 255, 255, 0, 0, 255, 191, 0, 0, 0, 63, 0, 0, 0, 63, 0, 0, 0, 191, 255, 127, 255, 255, 0, 0, 255, 191, 0, 0, 0, 191, 0, 0, 0, 63, 0, 0, 0, 63, 255, 127, 255, 255, 0, 0, 255, 191, 0, 0, 0, 63, 0, 0, 0, 63, 0, 0, 0, 63, 255, 127, 255, 255, 0, 0, 255, 191)
+}]

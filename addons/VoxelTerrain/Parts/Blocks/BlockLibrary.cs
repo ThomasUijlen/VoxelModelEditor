@@ -3,22 +3,22 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace VoxelTerrainPlugin {
-public class BlockLibrary {
-	List<BlockType> blockTypes = new List<BlockType>();
+namespace VoxelPlugin {
+public static class BlockLibrary {
+	static List<BlockType> blockTypes = new List<BlockType>();
 
-	public Image textureAtlas;
+	public static Image textureAtlas;
+	public static ImageTexture texture;
 
-	int textureWidth = 16;
+	static int textureWidth = 16;
 
-	public BlockType AddBlockType(BlockType blockType) {
+	static public BlockType AddBlockType(BlockType blockType) {
 		blockTypes.Add(blockType);
 		ConstructTextureAtlas();
 		return blockType;
 	}
 
-	public void ConstructTextureAtlas() {
-		GD.Print("***");
+	static public void ConstructTextureAtlas() {
 		//Extract all textures from the BlockTypes. Sort textures into the same list if they are duplicate.
 		Dictionary<string, List<BlockTexture>> textures = new Dictionary<string, List<BlockTexture>>();
 		foreach(BlockType blockType in blockTypes) {
@@ -29,7 +29,7 @@ public class BlockLibrary {
 				textures[id].Add(blockTexture);
 			}
 		}
-		GD.Print("---");
+		
 		//Create the texture atlas image and color it purple
 		int atlasWidth = CalculateAtlasSize(textures.Count);
 		textureAtlas = Image.Create(atlasWidth*textureWidth, atlasWidth*textureWidth, true, Image.Format.Rgba8);
@@ -47,10 +47,13 @@ public class BlockLibrary {
 				foreach(BlockTexture blockTexture in textureList) ApplyTexture(new Vector2I(x*textureWidth, y*textureWidth), atlasWidth, atlasWidth*textureWidth, blockTexture);
 			}
 		}
+
+		texture = ImageTexture.CreateFromImage(textureAtlas);
 	}
 
-	private void ApplyTexture(Vector2I origin, int atlasWidth, float totalSize, BlockTexture blockTexture) {
+	static private void ApplyTexture(Vector2I origin, int atlasWidth, float totalSize, BlockTexture blockTexture) {
 		blockTexture.UVSize = Vector2.One/atlasWidth;
+		blockTexture.UVPosition = new Vector2(origin.X, origin.Y)/totalSize;
 
 		for(int x = 0; x < textureWidth; x++) {
 			for(int y = 0; y < textureWidth; y++) {
@@ -62,7 +65,7 @@ public class BlockLibrary {
 		}
 	}
 
-	private int CalculateAtlasSize(int textureCount, int width = 1) {
+	static private int CalculateAtlasSize(int textureCount, int width = 1) {
 		int atlasSize = width*width;
 
 		if(textureCount > atlasSize) return CalculateAtlasSize(textureCount, width+1);
