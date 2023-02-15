@@ -2,7 +2,7 @@ using Godot;
 using System;
 using System.Collections;
 
-namespace VoxelTerrainPlugin {
+namespace VoxelPlugin {
 public partial class ThreadPool : Node
 {
     private const int THREAD_COUNT = 10;
@@ -17,7 +17,8 @@ public partial class ThreadPool : Node
             threadPool[i] = new PoolThread();
             PoolThread poolThread = threadPool[i];
             poolThread.pool = this;
-            Action action = () => {ThreadFunction(i);};
+            int threadI = i;
+            Action action = () => {ThreadFunction(threadI);};
             poolThread.thread.Start(Callable.From(action), GodotThread.Priority.Normal);
         }
     }
@@ -59,6 +60,7 @@ public partial class ThreadPool : Node
     }
 
     private void ThreadFunction(int i) {
+        GD.Print(i);
         PoolThread poolThread = threadPool[i];
 
         while(poolActive) {
@@ -105,13 +107,11 @@ public partial class ThreadPool : Node
             this.functionRequest = functionRequest;
             active = true;
             semaphore.Post();
-            pool.GetNode("/root/GlobalVariables").Call("threadActivate");
         }
 
         public void FunctionFinished() {
             active = false;
             functionRequest = null;
-            pool.GetNode("/root/GlobalVariables").CallDeferred("threadDeactivate");
         }
     }
 

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dorbw0vr4nrdq"]
+
+[ext_resource type="Script" path="res://addons/VoxelTerrain/Parts/World/VoxelWorld.cs" id="1_bp8te"]
+
+[node name="VoxelWorld" type="Node3D"]
+script = ExtResource("1_bp8te")
