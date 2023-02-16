@@ -34,8 +34,7 @@ public partial class Chunk
             for(int y = 0; y < SIZE; y++) {
                 for(int z = 0; z < SIZE; z++) {
                     Block block = new Block(this);
-                    block.coord = new Vector3I(x,y,z);
-                    block.position = block.coord + position;
+                    block.position = new Vector3(x,y,z) + position;
                     grid[x,y,z] = block;
                 }
             }
@@ -86,9 +85,14 @@ public partial class Chunk
         return null;
     }
 
-    public static void SetBlock(Vector3 position, BlockType blockType) {
+    public static bool SetBlock(Vector3 position, BlockType blockType, int priority = -1) {
         Block block = GetBlock(position);
-        if(block != null) block.SetBlockType(blockType);
+        if(block != null) {
+            block.SetBlockType(blockType, priority);
+            return true;
+        }
+
+        return false;
     }
 
     public Vector3I PositionToCoord(Vector3 position) {
