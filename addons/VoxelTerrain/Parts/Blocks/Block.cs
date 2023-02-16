@@ -4,9 +4,17 @@ using System;
 namespace VoxelPlugin {
 	public enum SIDE {DEFAULT, TOP, BOTTOM, LEFT, RIGHT, FRONT, BACK};
 
-public partial class Block : Resource {
-	[Signal]
-	public delegate void BlockChangedEventHandler();
+public class Block {
+
+	static Vector3[] neighbours = new Vector3[] {
+		Vector3.Zero,
+		Vector3.Up,
+		Vector3.Down,
+		Vector3.Left,
+		Vector3.Right,
+		Vector3.Forward,
+		Vector3.Back
+	};
 
 	public Vector3I coord;
 	public Vector3 position;
@@ -19,7 +27,14 @@ public partial class Block : Resource {
 
 	public void SetBlockType(BlockType blockType) {
 		this.blockType = blockType;
-		chunk.Update();
+		UpdateBlocks();
+		
+	}
+
+	private void UpdateBlocks() {
+		for(int i = 0; i < neighbours.Length; i++) {
+			Chunk.GetChunk(position + neighbours[i])?.Update();
+		}
 	}
 
 	public static Vector3 SideToVector(SIDE side) {

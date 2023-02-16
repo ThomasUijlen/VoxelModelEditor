@@ -15,12 +15,15 @@ public partial class VoxelRenderer : Node3D
 	bool threadActive = false;
 
 	Queue<Rid> multiMeshes = new Queue<Rid>();
+
+	List<Rid> instances = new List<Rid>();
 	
 	public override void _Ready() {
 		voxelFace = GD.Load<Mesh>("res://addons/VoxelTerrain/Parts/Blocks/Mesh/VoxelFace.tres");
 
 		for(int i = 0; i < 2; i++) {
 			Rid instance = RenderingServer.InstanceCreate();
+			instances.Add(instance);
         	RenderingServer.InstanceSetScenario(instance, GetWorld3D().Scenario);
 
 			Rid multiMesh = RenderingServer.MultimeshCreate();
@@ -31,11 +34,15 @@ public partial class VoxelRenderer : Node3D
 		SetProcess(false);
 	}
 
+	public override void _ExitTree() {
+		foreach(Rid instance in instances) RenderingServer.FreeRid(instance);
+	}
+
 	float cooldown = 0.0f;
 	public override void _Process(double delta) {
 		cooldown -= Convert.ToSingle(delta);
 
-		if(cooldown < 0.0f) {
+		if(cooldown <= 0.0f) {
 			if(threadActive) return;
 			SetProcess(false);
 			threadActive = true;
@@ -47,7 +54,7 @@ public partial class VoxelRenderer : Node3D
 	public void RequestUpdate(Block[,,] grid) {
 		recentGrid = grid;
 		SetProcess(true);
-		if(cooldown < 0.0f) cooldown = 0.1f;
+		if(cooldown < 0.0f) cooldown = 0.05f;
 	}
 
 	public void UpdateMesh() {
@@ -104,7 +111,8 @@ public partial class VoxelRenderer : Node3D
 	}
 
 	private void CollectFace(Block block, SIDE side) {
-		if(block.blockType == null) return;
+		BlockType blockType = block.blockType;
+		if(blockType == null) return;
 		Vector3 direction = Block.SideToVector(side);
 
 		BlockType neighbour = Chunk.GetBlockType(block.position + direction);
@@ -112,7 +120,7 @@ public partial class VoxelRenderer : Node3D
 
 		faces.Add(new Face(
 			new Transform3D(GetBasis(side), block.position),
-			block.blockType.GetTexture(side)
+			blockType.GetTexture(side)
 		));
 	}
 
