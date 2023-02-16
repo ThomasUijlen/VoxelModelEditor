@@ -8,7 +8,7 @@ public partial class Chunk
 {
     private static ConcurrentDictionary<Vector3I, SuggestionLib> chunkSuggestions = new ConcurrentDictionary<Vector3I, SuggestionLib>();
 
-    public void SuggestChange(Vector3 position, BlockType blockType, int priority = 0) {
+    public static void SuggestChange(Vector3 position, BlockType blockType, int priority = 0) {
         Vector3I chunkCoord = Chunk.PositionToChunkCoord(position);
 
         if(Chunk.SetBlock(position, blockType, priority)) return;
@@ -23,12 +23,18 @@ public partial class Chunk
         if(!chunkSuggestions.ContainsKey(chunkCoord)) return;
 
         SuggestionLib suggestionLib = chunkSuggestions[chunkCoord];
-        while(suggestionLib.suggestions.Count > 0) {
+
+        int tries = 500;
+        while(suggestionLib.suggestions.Count > 0 && tries > 0) {
+            tries -= 1;
+            
             Suggestion suggestion;
             if(suggestionLib.suggestions.TryDequeue(out suggestion)) {
                 SetBlock(suggestion.position, suggestion.change, suggestion.priority);
             }
         }
+
+        chunkSuggestions.TryRemove(chunkCoord, out _);
     }
 }
 

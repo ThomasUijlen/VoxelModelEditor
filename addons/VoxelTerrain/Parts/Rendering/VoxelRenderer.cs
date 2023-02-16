@@ -14,46 +14,62 @@ public partial class VoxelRenderer : Node3D
 	Block[,,] activeGrid;
 	bool threadActive = false;
 
-	Queue<Rid> multiMeshes = new Queue<Rid>();
-
-	List<Rid> instances = new List<Rid>();
+	Queue<MultiMeshInstance> multiMeshes = new Queue<MultiMeshInstance>();
 	
 	public override void _Ready() {
 		voxelFace = GD.Load<Mesh>("res://addons/VoxelTerrain/Parts/Blocks/Mesh/VoxelFace.tres");
 
 		for(int i = 0; i < 2; i++) {
-			Rid instance = RenderingServer.InstanceCreate();
-			instances.Add(instance);
-        	RenderingServer.InstanceSetScenario(instance, GetWorld3D().Scenario);
+			MultiMeshInstance multiMeshInstance = new MultiMeshInstance();
+			multiMeshInstance.instance = RenderingServer.InstanceCreate();
+        	RenderingServer.InstanceSetScenario(multiMeshInstance.instance, GetWorld3D().Scenario);
 
-			Rid multiMesh = RenderingServer.MultimeshCreate();
-			RenderingServer.InstanceSetBase(instance, multiMesh);
-			RenderingServer.MultimeshSetMesh(multiMesh, voxelFace.GetRid());
-			multiMeshes.Enqueue(multiMesh);
+			multiMeshInstance.multiMesh = RenderingServer.MultimeshCreate();
+			RenderingServer.InstanceSetBase(multiMeshInstance.instance, multiMeshInstance.multiMesh);
+			RenderingServer.MultimeshSetMesh(multiMeshInstance.multiMesh, voxelFace.GetRid());
+			multiMeshes.Enqueue(multiMeshInstance);
 		}
-		SetProcess(false);
-	}
-
-	public override void _ExitTree() {
-		foreach(Rid instance in instances) RenderingServer.FreeRid(instance);
 	}
 
 	float cooldown = 0.0f;
+	bool processing = false;
 	public override void _Process(double delta) {
+		if(!processing || !active) return;
+
 		cooldown -= Convert.ToSingle(delta);
 
 		if(cooldown <= 0.0f) {
 			if(threadActive) return;
-			SetProcess(false);
+			processing = false;
 			threadActive = true;
+			cancelThread = false;
 			activeGrid = (Block[,,]) recentGrid.Clone();
-			VoxelPluginMain.GetThreadPool(this).RequestFunctionCall(this, "UpdateMesh");
+			VoxelPluginMain.GetThreadPool(VoxelPluginMain.POOL_TYPE.RENDERING, this).RequestFunctionCall(this, "UpdateMesh");
+		}
+	}
+
+	bool active = false;
+	bool cancelThread = false;
+
+	public void Activate() {
+		active = true;
+	}
+
+	public void Deactivate() {
+		active = false;
+		cancelThread = true;
+
+		for(int i = 0; i < 2; i++) {
+			MultiMeshInstance multiMeshInstance = multiMeshes.Dequeue();
+			RenderingServer.InstanceSetVisible(multiMeshInstance.instance, false);
+			RenderingServer.MultimeshAllocateData(multiMeshInstance.multiMesh, 0, RenderingServer.MultimeshTransformFormat.Transform3D);
+			multiMeshes.Enqueue(multiMeshInstance);
 		}
 	}
 
 	public void RequestUpdate(Block[,,] grid) {
 		recentGrid = grid;
-		SetProcess(true);
+		processing = true;
 		if(cooldown < 0.0f) cooldown = 0.05f;
 	}
 
@@ -62,10 +78,10 @@ public partial class VoxelRenderer : Node3D
 
 		voxelFace.SurfaceGetMaterial(0).Set("shader_parameter/textureAtlas", BlockLibrary.texture);
 
-		Rid newMultiMesh = multiMeshes.Dequeue();
+		MultiMeshInstance newMultiMeshInstance = multiMeshes.Dequeue();
 
         RenderingServer.MultimeshAllocateData(
-            newMultiMesh,
+            newMultiMeshInstance.multiMesh,
             faces.Count,
             RenderingServer.MultimeshTransformFormat.Transform3D,
             false,
@@ -73,32 +89,37 @@ public partial class VoxelRenderer : Node3D
 
         for (int i = 0; i < faces.Count; i++)
         {
+			if(cancelThread) break;
 			Face face = faces[i];
-            RenderingServer.MultimeshInstanceSetTransform(newMultiMesh, i, face.transform);
-			RenderingServer.MultimeshInstanceSetCustomData(newMultiMesh, i,
+            RenderingServer.MultimeshInstanceSetTransform(newMultiMeshInstance.multiMesh, i, face.transform);
+			RenderingServer.MultimeshInstanceSetCustomData(newMultiMeshInstance.multiMesh, i,
 				new Color(
 					face.texture.UVPosition.X,
 					face.texture.UVPosition.Y,
 					face.texture.UVSize.X));
         }
 
-		Rid oldMultiMesh = multiMeshes.Dequeue();
-		RenderingServer.MultimeshAllocateData(oldMultiMesh, 0, RenderingServer.MultimeshTransformFormat.Transform3D);
+		RenderingServer.InstanceSetVisible(newMultiMeshInstance.instance, true);
 
-		multiMeshes.Enqueue(oldMultiMesh);
-		multiMeshes.Enqueue(newMultiMesh);
+		MultiMeshInstance oldMultiMeshInstance = multiMeshes.Dequeue();
+		//RenderingServer.MultimeshAllocateData(oldMultiMeshInstance.multiMesh, 0, RenderingServer.MultimeshTransformFormat.Transform3D);
+		RenderingServer.InstanceSetVisible(oldMultiMeshInstance.instance, false);
+
+		multiMeshes.Enqueue(oldMultiMeshInstance);
+		multiMeshes.Enqueue(newMultiMeshInstance);
 
 		threadActive = false;
 	}
 
 	private void CollectFaces(Block[,,] grid) {
 		faces.Clear();
-		int size = grid.GetLength(0);
+		Vector3I size = new Vector3I(grid.GetLength(0), grid.GetLength(1), grid.GetLength(2));
 
-		for(int x = 0; x < size; x++) {
-            for(int y = 0; y < size; y++) {
-                for(int z = 0; z < size; z++) {
+		for(int x = 0; x < size.X; x++) {
+            for(int y = 0; y < size.Y; y++) {
+                for(int z = 0; z < size.Z; z++) {
 					Block block = grid[x,y,z];
+					if(block.blockType == null) continue;
 					CollectFace(block, SIDE.TOP);
 					CollectFace(block, SIDE.BOTTOM);
 					CollectFace(block, SIDE.LEFT);
@@ -135,6 +156,11 @@ public partial class VoxelRenderer : Node3D
 		}
 
 		return new Basis(new Vector3(1,0,0), 0); 
+	}
+
+	private class MultiMeshInstance {
+		public Rid instance;
+		public Rid multiMesh;
 	}
 
 	private class Face {

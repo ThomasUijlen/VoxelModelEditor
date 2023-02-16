@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Threading;
 
 namespace VoxelPlugin {
 	public enum SIDE {DEFAULT, TOP, BOTTOM, LEFT, RIGHT, FRONT, BACK};
@@ -27,9 +28,12 @@ public class Block {
 
 	public void SetBlockType(BlockType blockType, int priority = -1) {
 		if(priority > 0 && priority < this.priority) return;
+
+		if(this.blockType == null && blockType != null) Interlocked.Increment(ref chunk.drawnBlocks);
+		else if(this.blockType != null && blockType == null) Interlocked.Decrement(ref chunk.drawnBlocks);
+
 		this.blockType = blockType;
-		UpdateBlocks();
-		
+		if(!chunk.generating) UpdateBlocks();	
 	}
 
 	private void UpdateBlocks() {

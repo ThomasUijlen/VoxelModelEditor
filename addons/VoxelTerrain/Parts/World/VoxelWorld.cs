@@ -8,10 +8,11 @@ namespace VoxelPlugin {
 public partial class VoxelWorld : Node3D
 {
 	[Export]
-	public int renderDistance = 500;
-	public int lazyDistance = 200;
+	public int renderDistance = 5;
+	[Export]
+	public int lazyDistance = 2;
 
-	private int CHUNK_SIZE = 0;
+	private Vector3 CHUNK_SIZE = Vector3.Zero;
 	private ConcurrentDictionary<Vector3I, Chunk> chunks = new ConcurrentDictionary<Vector3I, Chunk>();
 	private List<Vector3I> loadedCoords = new List<Vector3I>();
 	private List<Vector3I> lazyCoords = new List<Vector3I>();
@@ -30,16 +31,16 @@ public partial class VoxelWorld : Node3D
 
 		if(threadActive) return;
 		threadActive = true;
-		VoxelPluginMain.GetThreadPool(this).RequestFunctionCall(this, "ChunkCheck");
+		VoxelPluginMain.GetThreadPool(VoxelPluginMain.POOL_TYPE.GENERATION, this).RequestFunctionCall(this, "ChunkCheck");
 	}
 
 	public void ChunkCheck() {
 		UpdateCoordLists();
-		CreateNewChunks();
 		DeleteOldChunks();
+		CreateNewChunks();
+		threadActive = false;
 
 		GD.Print(chunks.Count);
-		threadActive = false;
 	}
 
 	private void UpdateCoordLists() {
@@ -49,17 +50,23 @@ public partial class VoxelWorld : Node3D
 		loadedCoords.Clear();
 		lazyCoords.Clear();
 
-		int renderDistance = Mathf.CeilToInt(this.renderDistance/Chunk.SIZE);
-		int totalRenderDistance = Mathf.CeilToInt((this.renderDistance + lazyDistance)/Chunk.SIZE);
+		int renderDistance = Mathf.CeilToInt(this.renderDistance);
+		int lazyDistance = Mathf.CeilToInt((this.renderDistance + this.lazyDistance));
 
-		for(int x = -totalRenderDistance; x < totalRenderDistance; x++) {
-			for(int y = -totalRenderDistance; y < totalRenderDistance; y++) {
-				for(int z = -totalRenderDistance; z < totalRenderDistance; z++) {
+		for(int x = -lazyDistance; x < lazyDistance; x++) {
+			for(int y = 0; y < 1; y++) {
+				for(int z = -lazyDistance; z < lazyDistance; z++) {
 					Vector3 chunkCoord = cameraChunkCoord + new Vector3(x,y,z);
+					lazyCoords.Add(Chunk.Vector3ToVector3I(chunkCoord));
+				}
+			}
+		}
 
-					float distance = chunkCoord.DistanceTo(cameraChunkCoord);
-					if(distance < totalRenderDistance) lazyCoords.Add(Chunk.Vector3ToVector3I(chunkCoord));
-					if(distance < renderDistance) loadedCoords.Add(Chunk.Vector3ToVector3I(chunkCoord));
+		for(int x = -renderDistance; x < renderDistance; x++) {
+			for(int y = 0; y < 1; y++) {
+				for(int z = -renderDistance; z < renderDistance; z++) {
+					Vector3 chunkCoord = cameraChunkCoord + new Vector3(x,y,z);
+					loadedCoords.Add(Chunk.Vector3ToVector3I(chunkCoord));
 				}
 			}
 		}
@@ -72,7 +79,7 @@ public partial class VoxelWorld : Node3D
 		foreach(Vector3I coord in loadedCoords) {
 			if(chunks.ContainsKey(coord)) continue;
 			chunks.TryAdd(coord, null);
-			VoxelPluginMain.GetThreadPool(this).RequestFunctionCall(this, "CreateChunk", new Godot.Collections.Array() {coord});
+			VoxelPluginMain.GetThreadPool(VoxelPluginMain.POOL_TYPE.GENERATION,this).RequestFunctionCall(this, "CreateChunk", new Godot.Collections.Array() {coord});
 		}
 	}
 
@@ -82,6 +89,17 @@ public partial class VoxelWorld : Node3D
 		chunk.world = this;
 		chunks.AddOrUpdate(coord, chunk, (coord, nullChunk) => chunk);
 		chunk.Prepare();
+	}
+
+	public void CreateVoxelRenderer(Vector3 position) {
+		Chunk chunk = Chunk.GetChunk(position);
+		if(chunk == null) return;
+		
+		VoxelRenderer voxelRenderer = VoxelPluginMain.GetRenderer(this);
+        voxelRenderer.Position = chunk.position;
+		chunk.voxelRenderer = voxelRenderer;
+		voxelRenderer.RequestUpdate(chunk.grid);
+        if(!voxelRenderer.IsInsideTree()) AddChild(voxelRenderer);
 	}
 
 	private void DeleteOldChunks() {
