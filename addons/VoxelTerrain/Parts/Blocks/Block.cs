@@ -16,16 +16,17 @@ public class Block {
 		Vector3.Back
 	};
 
-	public Vector3I coord;
 	public Vector3 position;
 	public BlockType blockType;
 	public Chunk chunk;
+	public int priority = 0;
 
 	public Block(Chunk chunk) {
 		this.chunk = chunk;
 	}
 
-	public void SetBlockType(BlockType blockType) {
+	public void SetBlockType(BlockType blockType, int priority = -1) {
+		if(priority > 0 && priority < this.priority) return;
 		this.blockType = blockType;
 		UpdateBlocks();
 		
