@@ -5,23 +5,28 @@ using System.Linq;
 
 namespace VoxelPlugin {
 public static class BlockLibrary {
-	static List<BlockType> blockTypes = new List<BlockType>();
+	static Dictionary<string, BlockType> blockTypes = new Dictionary<string, BlockType>();
 
 	public static Image textureAtlas;
 	public static ImageTexture texture;
 
 	static int textureWidth = 16;
 
-	static public BlockType AddBlockType(BlockType blockType) {
-		blockTypes.Add(blockType);
+	static public BlockType AddBlockType(string name, BlockType blockType) {
+		blockTypes.Add(name, blockType);
 		ConstructTextureAtlas();
 		return blockType;
+	}
+
+	static public BlockType GetBlockType(string name) {
+		if(blockTypes.ContainsKey(name)) return blockTypes[name];
+		return null;
 	}
 
 	static public void ConstructTextureAtlas() {
 		//Extract all textures from the BlockTypes. Sort textures into the same list if they are duplicate.
 		Dictionary<string, List<BlockTexture>> textures = new Dictionary<string, List<BlockTexture>>();
-		foreach(BlockType blockType in blockTypes) {
+		foreach(BlockType blockType in blockTypes.Values) {
 			List<BlockTexture> blockTextures = blockType.GetAllTextures();
 			foreach(BlockTexture blockTexture in blockTextures) {
 				string id = BitConverter.ToString(blockTexture.texture.GetData());
@@ -48,6 +53,7 @@ public static class BlockLibrary {
 			}
 		}
 
+		textureAtlas.GenerateMipmaps();
 		texture = ImageTexture.CreateFromImage(textureAtlas);
 	}
 

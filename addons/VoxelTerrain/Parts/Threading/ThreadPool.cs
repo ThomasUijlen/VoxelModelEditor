@@ -1,13 +1,13 @@
 using Godot;
 using System;
-using System.Collections;
+using System.Collections.Generic;
 
 namespace VoxelPlugin {
 public partial class ThreadPool : Node
 {
     private const int THREAD_COUNT = 20;
     private PoolThread[] threadPool = new PoolThread[THREAD_COUNT];
-    private Queue functionQueue = new Queue();
+    private Queue<FunctionRequest> functionQueue = new Queue<FunctionRequest>(2000);
 
     private bool poolActive = true;
 
@@ -39,8 +39,7 @@ public partial class ThreadPool : Node
             }
             
             if(!poolThread.active) {
-                poolThread.CallFunction(
-                    (FunctionRequest) functionQueue.Dequeue());
+                poolThread.CallFunction(functionQueue.Dequeue());
             }
         }
     }

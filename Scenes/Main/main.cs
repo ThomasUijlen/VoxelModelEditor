@@ -21,11 +21,11 @@ public partial class main : Sprite2D
 				}, new Color(1,1,1));
 		leaves = new BlockType(Image.LoadFromFile("res://Textures/Leaves.png"), new Color(1,1,1), true);
 
-		BlockLibrary.AddBlockType(new BlockType(new Color(1,1,1), 16));
-		BlockLibrary.AddBlockType(stone);
-		BlockLibrary.AddBlockType(new BlockType(Image.LoadFromFile("res://Textures/Dirt.png"), new Color(1,1,1)));
-		BlockLibrary.AddBlockType(leaves);
-		BlockLibrary.AddBlockType(log);
+		BlockLibrary.AddBlockType("Default", new BlockType(new Color(1,1,1), 16));
+		BlockLibrary.AddBlockType("Stone", stone);
+		BlockLibrary.AddBlockType("Dirt", new BlockType(Image.LoadFromFile("res://Textures/Dirt.png"), new Color(1,1,1)));
+		BlockLibrary.AddBlockType("Leaves", leaves);
+		BlockLibrary.AddBlockType("Log", log);
 
 		Texture = ImageTexture.CreateFromImage(BlockLibrary.textureAtlas);
 

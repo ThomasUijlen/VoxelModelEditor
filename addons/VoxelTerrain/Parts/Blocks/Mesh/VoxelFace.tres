@@ -5,7 +5,7 @@ code = "// NOTE: Shader automatically converted from Godot Engine 4.0.rc1.mono's
 
 shader_type spatial;
 render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx;
-uniform sampler2D textureAtlas : source_color,filter_nearest,repeat_enable;
+uniform sampler2D textureAtlas : source_color,filter_nearest_mipmap,repeat_enable;
 
 void vertex() {
 	UV = UV * INSTANCE_CUSTOM.b + INSTANCE_CUSTOM.rg;

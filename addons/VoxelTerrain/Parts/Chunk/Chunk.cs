@@ -8,31 +8,48 @@ public partial class Chunk
 {
     private static ConcurrentDictionary<Vector3I, Chunk> chunkList = new ConcurrentDictionary<Vector3I, Chunk>();
 
-    public const int SIZE = 16;
+    public static Vector3I SIZE = new Vector3I(16,256,16);
     public Block[,,] grid;
 
+    public bool generating = true;
+    public bool hasRenderer = false;
     public VoxelRenderer voxelRenderer;
     public Node3D world;
     public Vector3 position;
 
+    public IGenerator generator;
+    public int drawnBlocks = 0;
+
     public void Prepare() {
         CreateVoxelGrid();
         chunkList.TryAdd(PositionToChunkCoord(position), this);
+
+        generator = new NoiseLayer("Stone");
+        generator.Generate(this);
+        generating = false;
+        Update();
+        UpdateSurroundingChunks();
     }
 
     public void Remove() {
         chunkList.TryRemove(PositionToChunkCoord(position), out _);
-        if(voxelRenderer != null) voxelRenderer.QueueFree();
         grid = null;
+        DeleteVoxelRenderer();
+    }
+
+    public void DeleteVoxelRenderer() {
+        hasRenderer = false;
+        if(voxelRenderer != null) VoxelPluginMain.ReturnRenderer(voxelRenderer);
+        voxelRenderer = null;
     }
 
 
     public void CreateVoxelGrid() {
-        grid = new Block[SIZE,SIZE,SIZE];
+        grid = new Block[SIZE.X,SIZE.Y,SIZE.Z];
 
-        for(int x = 0; x < SIZE; x++) {
-            for(int y = 0; y < SIZE; y++) {
-                for(int z = 0; z < SIZE; z++) {
+        for(int x = 0; x < SIZE.X; x++) {
+            for(int y = 0; y < SIZE.Y; y++) {
+                for(int z = 0; z < SIZE.Z; z++) {
                     Block block = new Block(this);
                     block.position = new Vector3(x,y,z) + position;
                     grid[x,y,z] = block;
@@ -42,15 +59,33 @@ public partial class Chunk
     }
 
     public void Update() {
-        CreateVoxelRenderer();
-        voxelRenderer.RequestUpdate(grid);
+        if(drawnBlocks > 0) {
+            CreateVoxelRenderer();
+        } else {
+            DeleteVoxelRenderer();
+        }
+        voxelRenderer?.RequestUpdate(grid);
+    }
+
+    static Vector3[] neighbours = new Vector3[] {
+		Vector3.Up,
+		Vector3.Down,
+		Vector3.Left,
+		Vector3.Right,
+		Vector3.Forward,
+		Vector3.Back
+	};
+
+    public void UpdateSurroundingChunks() {
+        for(int i = 0; i < neighbours.Length; i++) {
+			Chunk.GetChunk(position + neighbours[i]*SIZE)?.Update();
+		}
     }
 
     private void CreateVoxelRenderer() {
-        if(voxelRenderer != null) return;
-        voxelRenderer = new VoxelRenderer();
-        voxelRenderer.Position = position;
-        world.CallDeferred("add_child", voxelRenderer);
+        if(hasRenderer) return;
+        hasRenderer = true;
+        world.CallDeferred("CreateVoxelRenderer", position);        
     }
 
     public static Chunk GetChunk(Vector3 position) {
@@ -75,9 +110,9 @@ public partial class Chunk
             if(blockCoord.X < 0
             || blockCoord.Y < 0
             || blockCoord.Z < 0
-            || blockCoord.X >= SIZE
-            || blockCoord.Y >= SIZE
-            || blockCoord.X >= SIZE) return null;
+            || blockCoord.X >= SIZE.X
+            || blockCoord.Y >= SIZE.Y
+            || blockCoord.X >= SIZE.Z) return null;
             
             return chunk.grid[blockCoord.X, blockCoord.Y, blockCoord.Z];
         }
