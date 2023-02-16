@@ -5,7 +5,7 @@ using System.Collections;
 namespace VoxelPlugin {
 public partial class ThreadPool : Node
 {
-    private const int THREAD_COUNT = 10;
+    private const int THREAD_COUNT = 20;
     private PoolThread[] threadPool = new PoolThread[THREAD_COUNT];
     private Queue functionQueue = new Queue();
 
@@ -33,8 +33,9 @@ public partial class ThreadPool : Node
 
             if(!poolThread.thread.IsAlive()) {
                 poolThread.thread.WaitToFinish();
-                Action action = () => {ThreadFunction(i);};
-            poolThread.thread.Start(Callable.From(action), GodotThread.Priority.Normal);
+                int threadI = i;
+                Action action = () => {ThreadFunction(threadI);};
+                poolThread.thread.Start(Callable.From(action), GodotThread.Priority.Normal);
             }
             
             if(!poolThread.active) {
@@ -60,13 +61,12 @@ public partial class ThreadPool : Node
     }
 
     private void ThreadFunction(int i) {
-        GD.Print(i);
         PoolThread poolThread = threadPool[i];
 
         while(poolActive) {
             poolThread.semaphore.Wait();
             if(!poolActive) return;
-            if(IsInstanceValid(poolThread.functionRequest.node)) {
+            if(poolThread.functionRequest.node != null && IsInstanceValid(poolThread.functionRequest.node)) {
                 if(poolThread.functionRequest.parameters != null) {
                     poolThread.functionRequest.node.Callv(
                         poolThread.functionRequest.functionName,

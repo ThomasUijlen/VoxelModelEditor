@@ -22,7 +22,9 @@ func move(delta):
 	if Input.is_action_pressed("Up"): globalMovement += Vector3.UP
 	if Input.is_action_pressed("Down"): globalMovement += Vector3.DOWN
 	
-	var totalMovement = globalMovement + (to_global(localMovement)-global_position)
+	var totalMovement = (globalMovement + (to_global(localMovement)-global_position)).normalized()
+	if Input.is_action_pressed("Shift"): totalMovement *= 2.0
+	
 	totalMovement *= flySpeed*delta
 	
 	global_position += totalMovement

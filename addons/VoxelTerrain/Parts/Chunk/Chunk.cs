@@ -1,31 +1,29 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace VoxelPlugin {
-public partial class Chunk : Node3D
+public partial class Chunk
 {
-    private static Dictionary<Vector3I, Chunk> chunkList = new Dictionary<Vector3I, Chunk>();
+    private static ConcurrentDictionary<Vector3I, Chunk> chunkList = new ConcurrentDictionary<Vector3I, Chunk>();
 
     public const int SIZE = 16;
     public Block[,,] grid;
 
     public VoxelRenderer voxelRenderer;
+    public Node3D world;
+    public Vector3 position;
 
-    public override void _Ready() {
-        AddChild(voxelRenderer);
+    public void Prepare() {
+        CreateVoxelGrid();
+        chunkList.TryAdd(PositionToChunkCoord(position), this);
     }
 
-    public override void _EnterTree() {
-        if(voxelRenderer == null) {
-            CreateVoxelGrid();
-            voxelRenderer = new VoxelRenderer();
-        }
-        chunkList.Add(PositionToChunkCoord(GlobalPosition), this);
-    }
-
-    public override void _ExitTree() {
-        chunkList.Remove(PositionToChunkCoord(GlobalPosition));
+    public void Remove() {
+        chunkList.TryRemove(PositionToChunkCoord(position), out _);
+        if(voxelRenderer != null) voxelRenderer.QueueFree();
+        grid = null;
     }
 
 
@@ -37,7 +35,7 @@ public partial class Chunk : Node3D
                 for(int z = 0; z < SIZE; z++) {
                     Block block = new Block(this);
                     block.coord = new Vector3I(x,y,z);
-                    block.position = block.coord + GlobalPosition;
+                    block.position = block.coord + position;
                     grid[x,y,z] = block;
                 }
             }
@@ -45,7 +43,21 @@ public partial class Chunk : Node3D
     }
 
     public void Update() {
+        CreateVoxelRenderer();
         voxelRenderer.RequestUpdate(grid);
+    }
+
+    private void CreateVoxelRenderer() {
+        if(voxelRenderer != null) return;
+        voxelRenderer = new VoxelRenderer();
+        voxelRenderer.Position = position;
+        world.CallDeferred("add_child", voxelRenderer);
+    }
+
+    public static Chunk GetChunk(Vector3 position) {
+        Vector3I coord = PositionToChunkCoord(position);
+        if(chunkList.ContainsKey(coord)) return chunkList[coord];
+        return null;
     }
 
     public static BlockType GetBlockType(Vector3 position) {
@@ -56,21 +68,21 @@ public partial class Chunk : Node3D
 
     public static Block GetBlock(Vector3 position) {
         Vector3I chunkCoord = PositionToChunkCoord(position);
-
+        
         if(chunkList.ContainsKey(chunkCoord)) {
             Chunk chunk = chunkList[chunkCoord];
             Vector3I blockCoord = chunk.PositionToCoord(position);
-
+            
             if(blockCoord.X < 0
             || blockCoord.Y < 0
             || blockCoord.Z < 0
             || blockCoord.X >= SIZE
             || blockCoord.Y >= SIZE
             || blockCoord.X >= SIZE) return null;
-
+            
             return chunk.grid[blockCoord.X, blockCoord.Y, blockCoord.Z];
         }
-
+        
         return null;
     }
 
@@ -80,7 +92,7 @@ public partial class Chunk : Node3D
     }
 
     public Vector3I PositionToCoord(Vector3 position) {
-        return Vector3ToVector3I(position - GlobalPosition);
+        return Vector3ToVector3I(position - this.position);
     }
 
     public static Vector3I PositionToChunkCoord(Vector3 position) {
@@ -89,6 +101,10 @@ public partial class Chunk : Node3D
 
     public static Vector3I Vector3ToVector3I(Vector3 vector) {
         return new Vector3I(Mathf.FloorToInt(vector.X), Mathf.FloorToInt(vector.Y), Mathf.FloorToInt(vector.Z));
+    }
+
+    public static Vector3 Vector3IToVector3(Vector3I vector) {
+        return new Vector3(vector.X, vector.Y, vector.Z);
     }
 }
 }
