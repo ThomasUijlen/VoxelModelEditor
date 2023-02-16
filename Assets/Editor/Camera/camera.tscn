@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://cubdj5w4rb2jc"]
+
+[ext_resource type="Script" path="res://Assets/Editor/Camera/cameraController.gd" id="1_bi57d"]
+
+[node name="Camera" type="Node3D"]
+script = ExtResource("1_bi57d")
+mouseSensitivity = 0.7
+flySpeed = 20.0
+
+[node name="Camera3D" type="Camera3D" parent="."]
