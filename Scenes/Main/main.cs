@@ -87,7 +87,7 @@ public partial class main : Sprite2D
 						Vector3 pos = new Vector3(x,y,z);
 						float d = pos.DistanceTo(Vector3.Zero);
 						if(d > radius) continue;
-						Chunk.SetBlock(startCoord+pos, null);
+						Chunk.SetBlock(startCoord+pos, BlockLibrary.GetBlockType("Air"));
 					}
 				}
 			}

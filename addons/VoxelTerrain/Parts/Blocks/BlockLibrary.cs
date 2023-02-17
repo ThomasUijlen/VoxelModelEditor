@@ -12,6 +12,11 @@ public static class BlockLibrary {
 
 	static int textureWidth = 16;
 
+	static BlockLibrary() {
+		AddBlockType("Air", new BlockType(new Color(1,1,1,0), textureWidth, true));
+		GetBlockType("Air").rendered = false;
+	}
+
 	static public BlockType AddBlockType(string name, BlockType blockType) {
 		blockTypes.Add(name, blockType);
 		ConstructTextureAtlas();

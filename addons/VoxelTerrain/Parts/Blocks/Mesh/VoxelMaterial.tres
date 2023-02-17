@@ -1,0 +1,38 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3 uid="uid://c6oi8gjjnjjx6"]
+
+[ext_resource type="Texture2D" uid="uid://bv8epwvmg3esu" path="res://icon.svg" id="1_kuabl"]
+
+[sub_resource type="Shader" id="Shader_yapsx"]
+code = "// NOTE: Shader automatically converted from Godot Engine 4.0.rc1.mono's StandardMaterial3D.
+
+shader_type spatial;
+render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx, vertex_lighting;
+uniform sampler2D textureAtlas : source_color,filter_nearest_mipmap,repeat_enable;
+
+varying float atlasScale;
+varying vec2 UVStart;
+void vertex() {
+	vec2 originalUV = UV;
+	vec2 UVScale = UV2.xy;
+	atlasScale = COLOR.b;
+	UVStart = COLOR.rg;
+	UV *= atlasScale;
+}
+
+void fragment() {
+	vec2 uv = UV;
+	while(uv.x > atlasScale) uv.x -= atlasScale;
+	while(uv.y > atlasScale) uv.y -= atlasScale;
+	//uv.x = mod(UV.x, UV2.x);
+	//uv.y = mod(UV.y, UV2.y);
+	vec4 tex = texture(textureAtlas, uv+UVStart);
+	ALBEDO = tex.rgb;
+	ALPHA = tex.a;
+	ALPHA_SCISSOR_THRESHOLD = 0.5;
+}
+"
+
+[resource]
+render_priority = 0
+shader = SubResource("Shader_yapsx")
+shader_parameter/textureAtlas = ExtResource("1_kuabl")

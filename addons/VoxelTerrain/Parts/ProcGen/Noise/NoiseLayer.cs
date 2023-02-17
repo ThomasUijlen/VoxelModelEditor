@@ -6,7 +6,7 @@ public class NoiseLayer : IGenerator
 {
     public int seed = 0;
     public Vector3 scale = Vector3.One;
-    public float noiseWeight = 10.0f;
+    public float noiseWeight = 3.0f;
     public float startHeight = 10.0f;
     public float heightModifier = 0.1f;
     public string block = "";

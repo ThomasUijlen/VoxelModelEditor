@@ -46,6 +46,7 @@ public partial class VoxelWorld : Node3D
 	private void UpdateCoordLists() {
 		Vector3 cameraPosition = GetViewport().GetCamera3D().GlobalPosition;
 		Vector3I cameraChunkCoord = Chunk.PositionToChunkCoord(cameraPosition);
+		cameraChunkCoord.Y = 0;
 
 		loadedCoords.Clear();
 		lazyCoords.Clear();

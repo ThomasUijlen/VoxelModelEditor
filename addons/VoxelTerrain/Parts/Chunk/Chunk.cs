@@ -8,7 +8,7 @@ public partial class Chunk
 {
     private static ConcurrentDictionary<Vector3I, Chunk> chunkList = new ConcurrentDictionary<Vector3I, Chunk>();
 
-    public static Vector3I SIZE = new Vector3I(16,256,16);
+    public static Vector3I SIZE = new Vector3I(8,256,8);
     public Block[,,] grid;
 
     public bool generating = true;
@@ -46,12 +46,14 @@ public partial class Chunk
 
     public void CreateVoxelGrid() {
         grid = new Block[SIZE.X,SIZE.Y,SIZE.Z];
+        BlockType air = BlockLibrary.GetBlockType("Air");
 
         for(int x = 0; x < SIZE.X; x++) {
             for(int y = 0; y < SIZE.Y; y++) {
                 for(int z = 0; z < SIZE.Z; z++) {
                     Block block = new Block(this);
                     block.position = new Vector3(x,y,z) + position;
+                    block.SetBlockType(air);
                     grid[x,y,z] = block;
                 }
             }
@@ -107,14 +109,14 @@ public partial class Chunk
             Chunk chunk = chunkList[chunkCoord];
             Vector3I blockCoord = chunk.PositionToCoord(position);
             
-            if(blockCoord.X < 0
+            if(!(blockCoord.X < 0
             || blockCoord.Y < 0
             || blockCoord.Z < 0
             || blockCoord.X >= SIZE.X
             || blockCoord.Y >= SIZE.Y
-            || blockCoord.X >= SIZE.Z) return null;
+            || blockCoord.X >= SIZE.Z)) return chunk.grid[blockCoord.X, blockCoord.Y, blockCoord.Z];
             
-            return chunk.grid[blockCoord.X, blockCoord.Y, blockCoord.Z];
+            return null;
         }
         
         return null;
