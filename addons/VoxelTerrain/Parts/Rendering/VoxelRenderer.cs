@@ -15,6 +15,7 @@ public partial class VoxelRenderer : Node3D
 	int quadCount = 500;
 
 	private VoxelPluginMain.POOL_TYPE poolType = VoxelPluginMain.POOL_TYPE.RENDERING;
+	public VoxelWorld world;
 	
 	public override void _Ready() {
 		for(int i = 0; i < 2; i++) {
@@ -87,7 +88,7 @@ public partial class VoxelRenderer : Node3D
 		CollectQuads();
 
 		MeshInstance newMeshInstance = meshes.Dequeue();
-	
+		
 		GenerateMesh(newMeshInstance);
 
 		RenderingServer.InstanceSetVisible(newMeshInstance.instance, true);
@@ -127,7 +128,7 @@ public partial class VoxelRenderer : Node3D
 
 	private void CollectFace(Block block, SIDE side) {
 		BlockType blockType = block.blockType;
-		if(blockType == null || !blockType.rendered) return;
+		if(!blockType.rendered) return;
 		Vector3 direction = Block.SideToVector(side);
 
 		BlockType neighbour = Chunk.GetBlockType(block.position + direction);
@@ -160,9 +161,10 @@ public partial class VoxelRenderer : Node3D
 						if(quadWidth == 1) break;
 					}
 
-					//Consume faces so they can't be used in further iterations
+					//Consume faces so they can't be used again
 					for(int y = 0; y < quadLength; y++) for(int x = 0; x < quadWidth; x++) consumedFaces.Add(currentPosition + scanDirections[0]*y + scanDirections[1]*x);
 
+					//Add a quad to the list
 					Quad quad = new Quad();
 					quad.blockTexture = blockTexturePair.Key;
 					quad.position = currentPosition;

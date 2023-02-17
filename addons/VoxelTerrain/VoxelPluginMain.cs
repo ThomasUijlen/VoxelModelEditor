@@ -28,10 +28,10 @@ public partial class VoxelPluginMain : EditorPlugin
 
 	public static Queue<VoxelRenderer> renderers = new Queue<VoxelRenderer>();
 
-	public static VoxelRenderer GetRenderer(Node node) {
+	public static VoxelRenderer GetRenderer(VoxelWorld world) {
 		VoxelRenderer renderer = null;
 
-		if(renderers.Count > 0) {renderer = renderers.Dequeue();} else {renderer = new VoxelRenderer();}
+		if(renderers.Count > 0) {renderer = renderers.Dequeue();} else {renderer = new VoxelRenderer(); renderer.world = world;}
 
 		renderer.Activate();
 		return renderer;
