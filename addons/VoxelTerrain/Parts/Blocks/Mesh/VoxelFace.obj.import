@@ -1,0 +1,21 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cikqlqojef6ss"
+path="res://.godot/imported/VoxelFace.obj-5accfa3676aa9cbc6bb485b58016892f.mesh"
+
+[deps]
+
+files=["res://.godot/imported/VoxelFace.obj-5accfa3676aa9cbc6bb485b58016892f.mesh"]
+
+source_file="res://addons/VoxelTerrain/Parts/Blocks/Mesh/VoxelFace.obj"
+dest_files=["res://.godot/imported/VoxelFace.obj-5accfa3676aa9cbc6bb485b58016892f.mesh", "res://.godot/imported/VoxelFace.obj-5accfa3676aa9cbc6bb485b58016892f.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true

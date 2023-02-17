@@ -9,7 +9,8 @@ public partial class VoxelPluginMain : EditorPlugin
 {
 	public enum POOL_TYPE {
 		GENERATION,
-		RENDERING
+		RENDERING,
+		RENDERING_CLOSE
 	};
 
 	public static Dictionary<POOL_TYPE, ThreadPool> poolList = new Dictionary<POOL_TYPE, ThreadPool>();

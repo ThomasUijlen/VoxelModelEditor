@@ -5,26 +5,29 @@ using System.Collections.Generic;
 namespace VoxelPlugin {
 public partial class VoxelRenderer : Node3D
 {
-
-	Material voxelMaterial;
-
 	Block[,,] recentGrid;
 	Block[,,] activeGrid;
 	bool threadActive = false;
 
 	Queue<MeshInstance> meshes = new Queue<MeshInstance>();
+	List<MeshInstance> meshList = new List<MeshInstance>();
+
+	int quadCount = 500;
+
+	private VoxelPluginMain.POOL_TYPE poolType = VoxelPluginMain.POOL_TYPE.RENDERING;
 	
 	public override void _Ready() {
-		voxelMaterial = GD.Load<Material>("res://addons/VoxelTerrain/Parts/Blocks/Mesh/VoxelMaterial.tres");
-
 		for(int i = 0; i < 2; i++) {
 			MeshInstance multiMeshInstance = new MeshInstance();
 			multiMeshInstance.instance = RenderingServer.InstanceCreate();
         	RenderingServer.InstanceSetScenario(multiMeshInstance.instance, GetWorld3D().Scenario);
 
-			multiMeshInstance.mesh = RenderingServer.MeshCreate();
+			multiMeshInstance.mesh = RenderingServer.MultimeshCreate();
 			RenderingServer.InstanceSetBase(multiMeshInstance.instance, multiMeshInstance.mesh);
+			RenderingServer.MultimeshSetMesh(multiMeshInstance.mesh, BlockLibrary.voxelMesh.GetRid());
+			RenderingServer.MultimeshAllocateData(multiMeshInstance.mesh, quadCount, RenderingServer.MultimeshTransformFormat.Transform3D, true);
 			meshes.Enqueue(multiMeshInstance);
+			meshList.Add(multiMeshInstance);
 		}
 	}
 
@@ -41,7 +44,8 @@ public partial class VoxelRenderer : Node3D
 			threadActive = true;
 			cancelThread = false;
 			activeGrid = (Block[,,]) recentGrid.Clone();
-			VoxelPluginMain.GetThreadPool(VoxelPluginMain.POOL_TYPE.RENDERING, this).RequestFunctionCall(this, "UpdateMesh");
+			VoxelPluginMain.GetThreadPool(poolType, this).RequestFunctionCall(this, "UpdateMesh");
+			poolType = VoxelPluginMain.POOL_TYPE.RENDERING_CLOSE;
 		}
 	}
 
@@ -51,6 +55,7 @@ public partial class VoxelRenderer : Node3D
 	public void Activate() {
 		active = true;
 		cooldown = 1.0f;
+		poolType = VoxelPluginMain.POOL_TYPE.RENDERING;
 	}
 
 	public void Deactivate() {
@@ -64,7 +69,8 @@ public partial class VoxelRenderer : Node3D
 		}
 	}
 
-	public void RequestUpdate(Block[,,] grid) {
+	public void RequestUpdate(Block[,,] grid, bool close = true) {
+		if(!close) poolType = VoxelPluginMain.POOL_TYPE.RENDERING;
 		recentGrid = grid;
 		processing = true;
 		if(cooldown < 0.0f) cooldown = 0.05f;
@@ -87,7 +93,6 @@ public partial class VoxelRenderer : Node3D
 		RenderingServer.InstanceSetVisible(newMeshInstance.instance, true);
 
 		MeshInstance oldMeshInstance = meshes.Dequeue();
-		RenderingServer.MeshClear(oldMeshInstance.mesh);
 		RenderingServer.InstanceSetVisible(oldMeshInstance.instance, false);
 
 		meshes.Enqueue(oldMeshInstance);
@@ -185,58 +190,34 @@ public partial class VoxelRenderer : Node3D
 			return;
 		}
 
-		Godot.Collections.Array array = new Godot.Collections.Array();
-		array.Resize((int) RenderingServer.ArrayType.Max);
+		if(quads.Count >= quadCount) {
+			while(quads.Count >= quadCount) quadCount += 250;
+			foreach(MeshInstance mesh in meshList) {
+				RenderingServer.MultimeshAllocateData(mesh.mesh, quadCount, RenderingServer.MultimeshTransformFormat.Transform3D, true);
+			}
+		}
 
-		Vector3[] vertexList = new Vector3[quads.Count*6];
-		Vector2[] uvList = new Vector2[vertexList.Length];
-		Vector2[] uv2List = new Vector2[vertexList.Length];
-		Vector3[] normalList = new Vector3[vertexList.Length];
-		Color[] colors = new Color[vertexList.Length];
+		RenderingServer.MultimeshSetVisibleInstances(meshInstance.mesh, quads.Count);
 
-		// vertexList.Resize(quads.Count*6);
-		// uvList.Resize(quads.Count*6);
-		// normalList.Resize(quads.Count*6);
+		for(int i = 0; i < quads.Count; i ++) {
+			Quad quad = quads[i];
+			Transform3D transform = new Transform3D(basisTable[quad.quadIndex], Vector3.Zero);
+			transform = transform.Scaled(quad.scale);
+			transform.Origin += quad.position + quad.scale*0.5f;
 
-		int vertexCount = 0;
-		foreach(Quad quad in quads) {
-			Vector3[] vertices = quadTable[quad.quadIndex];
-			Vector3 normal = normalTable[quad.quadIndex];
+			Vector2 UV2 = UVFlipTable[quad.quadIndex] ? quad.scale2D : new Vector2(quad.scale2D.Y, quad.scale2D.X);
+			// Vector2 UV2 = quad.scale2D;
 
 			Color color = new Color(
 				quad.blockTexture.UVPosition.X,
 				quad.blockTexture.UVPosition.Y,
-				quad.blockTexture.UVSize.X
+				1.0f/UV2.X,
+				1.0f/UV2.Y
 			);
 
-			Vector2 UV2 = UVFlipTable[quad.quadIndex] ? new Vector2(quad.scale2D.Y, quad.scale2D.X) : quad.scale2D;
-
-			for(int i = 0; i < 6; i++) {
-				uvList[vertexCount] = UVTable[i]*UV2;
-				uv2List[vertexCount] = UV2;
-				vertexList[vertexCount] = (vertices[i]*quad.scale)+quad.position;
-				normalList[vertexCount] = normal;
-				colors[vertexCount] = color;
-				vertexCount++;
-			}
+			RenderingServer.MultimeshInstanceSetTransform(meshInstance.mesh, i, transform);
+			RenderingServer.MultimeshInstanceSetColor(meshInstance.mesh, i, color);
 		}
-
-		array[(int) RenderingServer.ArrayType.Vertex] = vertexList;
-		array[(int) RenderingServer.ArrayType.TexUV] = uvList;
-		array[(int) RenderingServer.ArrayType.TexUV2] = uv2List;
-		array[(int) RenderingServer.ArrayType.Normal] = normalList;
-		array[(int) RenderingServer.ArrayType.Color] = colors;
-
-		// new ArrayMesh().AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, array);
-		
-		RenderingServer.MeshAddSurfaceFromArrays(
-			meshInstance.mesh,
-			RenderingServer.PrimitiveType.Triangles,
-			array
-		);
-		
-		voxelMaterial.Set("shader_parameter/textureAtlas", BlockLibrary.texture);
-		RenderingServer.MeshSurfaceSetMaterial(meshInstance.mesh, 0, voxelMaterial.GetRid());
 	}
 
 	private class MeshInstance {
@@ -251,6 +232,15 @@ public partial class VoxelRenderer : Node3D
 		public Vector3 scale = Vector3.One;
 		public SIDE quadIndex = 0;
 	}
+
+	private static Dictionary<SIDE, Basis> basisTable = new Dictionary<SIDE, Basis> {
+		{SIDE.FRONT, new Basis(new Vector3(1,0,0), -Mathf.Pi/2f)},
+		{SIDE.BACK, new Basis(new Vector3(1,0,0), Mathf.Pi/2f)},
+		{SIDE.LEFT, new Basis(new Vector3(0,0,1), Mathf.Pi/2f).Rotated(new Vector3(1,0,0), -Mathf.Pi/2f)},
+		{SIDE.RIGHT,new Basis(new Vector3(0,0,1), -Mathf.Pi/2f).Rotated(new Vector3(1,0,0), Mathf.Pi/2f)},
+		{SIDE.TOP, new Basis(new Vector3(1,0,0), 0)},
+		{SIDE.BOTTOM, new Basis(new Vector3(1,0,0), Mathf.Pi)}
+	};
 
 	private static Dictionary<SIDE, Vector3[]> scanTable = new Dictionary<SIDE, Vector3[]> {
 		{SIDE.FRONT, new Vector3[] {Vector3.Up, Vector3.Right}},
@@ -280,12 +270,12 @@ public partial class VoxelRenderer : Node3D
 	};
 
 	private static Dictionary<SIDE, bool> UVFlipTable = new Dictionary<SIDE, bool> {
-		{SIDE.FRONT, true},
-		{SIDE.BACK, false},
-		{SIDE.LEFT, false},
-		{SIDE.RIGHT, true},
+		{SIDE.FRONT, false},
+		{SIDE.BACK, true},
+		{SIDE.LEFT, true},
+		{SIDE.RIGHT, false},
 		{SIDE.TOP, false},
-		{SIDE.BOTTOM, false}
+		{SIDE.BOTTOM, true}
 	};
 
 	private static Vector2[] UVTable = new Vector2[] {

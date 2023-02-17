@@ -24,6 +24,7 @@ public partial class main : Sprite2D
 		BlockLibrary.AddBlockType("Default", new BlockType(new Color(1,1,1), 16));
 		BlockLibrary.AddBlockType("Stone", stone);
 		BlockLibrary.AddBlockType("Dirt", new BlockType(Image.LoadFromFile("res://Textures/Dirt.png"), new Color(1,1,1)));
+		BlockLibrary.AddBlockType("Grass", new BlockType(Image.LoadFromFile("res://Textures/Grass.png"), new Color(1,1,1)));
 		BlockLibrary.AddBlockType("Leaves", leaves);
 		BlockLibrary.AddBlockType("Log", log);
 

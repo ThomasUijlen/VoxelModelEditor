@@ -39,8 +39,6 @@ public partial class VoxelWorld : Node3D
 		DeleteOldChunks();
 		CreateNewChunks();
 		threadActive = false;
-
-		GD.Print(chunks.Count);
 	}
 
 	private void UpdateCoordLists() {

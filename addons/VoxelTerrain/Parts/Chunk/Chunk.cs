@@ -8,7 +8,7 @@ public partial class Chunk
 {
     private static ConcurrentDictionary<Vector3I, Chunk> chunkList = new ConcurrentDictionary<Vector3I, Chunk>();
 
-    public static Vector3I SIZE = new Vector3I(8,256,8);
+    public static Vector3I SIZE = new Vector3I(16,256,16);
     public Block[,,] grid;
 
     public bool generating = true;
@@ -18,14 +18,18 @@ public partial class Chunk
     public Vector3 position;
 
     public IGenerator generator;
-    public int drawnBlocks = 0;
 
     public void Prepare() {
         CreateVoxelGrid();
         chunkList.TryAdd(PositionToChunkCoord(position), this);
 
-        generator = new NoiseLayer("Stone");
+        generator = new NoiseLayer("Stone",10f);
+        ((NoiseLayer) generator).AddLayer("Dirt");
+        ((NoiseLayer) generator).AddLayer("Dirt");
+        ((NoiseLayer) generator).AddLayer("Dirt");
+        ((NoiseLayer) generator).AddLayer("Grass");
         generator.Generate(this);
+
         generating = false;
         Update();
         UpdateSurroundingChunks();
@@ -60,13 +64,14 @@ public partial class Chunk
         }
     }
 
-    public void Update() {
-        if(drawnBlocks > 0) {
-            CreateVoxelRenderer();
-        } else {
-            DeleteVoxelRenderer();
-        }
-        voxelRenderer?.RequestUpdate(grid);
+    public void Update(bool fromBlock = true) {
+        CreateVoxelRenderer();
+        // if(drawnBlocks > 0) {
+        //     CreateVoxelRenderer();
+        // } else {
+        //     DeleteVoxelRenderer();
+        // }
+        voxelRenderer?.RequestUpdate(grid, fromBlock);
     }
 
     static Vector3[] neighbours = new Vector3[] {
@@ -80,7 +85,7 @@ public partial class Chunk
 
     public void UpdateSurroundingChunks() {
         for(int i = 0; i < neighbours.Length; i++) {
-			Chunk.GetChunk(position + neighbours[i]*SIZE)?.Update();
+			Chunk.GetChunk(position + neighbours[i]*SIZE)?.Update(false);
 		}
     }
 
@@ -108,15 +113,7 @@ public partial class Chunk
         if(chunkList.ContainsKey(chunkCoord)) {
             Chunk chunk = chunkList[chunkCoord];
             Vector3I blockCoord = chunk.PositionToCoord(position);
-            
-            if(!(blockCoord.X < 0
-            || blockCoord.Y < 0
-            || blockCoord.Z < 0
-            || blockCoord.X >= SIZE.X
-            || blockCoord.Y >= SIZE.Y
-            || blockCoord.X >= SIZE.Z)) return chunk.grid[blockCoord.X, blockCoord.Y, blockCoord.Z];
-            
-            return null;
+            return chunk.grid[blockCoord.X, blockCoord.Y, blockCoord.Z];
         }
         
         return null;

@@ -7,16 +7,16 @@ code = "// NOTE: Shader automatically converted from Godot Engine 4.0.rc1.mono's
 
 shader_type spatial;
 render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx, vertex_lighting;
-uniform sampler2D textureAtlas : source_color,filter_nearest_mipmap,repeat_enable;
+uniform sampler2D textureAtlas : source_color,filter_nearest_mipmap,repeat_disable;
 
-varying float atlasScale;
+uniform float atlasScale;
+
 varying vec2 UVStart;
 void vertex() {
 	vec2 originalUV = UV;
-	vec2 UVScale = UV2.xy;
-	atlasScale = COLOR.b;
+	vec2 UVScale = vec2(1.0/COLOR.b, 1.0/COLOR.a);
 	UVStart = COLOR.rg;
-	UV *= atlasScale;
+	UV *= atlasScale*UVScale;
 }
 
 void fragment() {
@@ -29,10 +29,13 @@ void fragment() {
 	ALBEDO = tex.rgb;
 	ALPHA = tex.a;
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
+	ROUGHNESS = 1.0;
+	SPECULAR = 0.0;
 }
 "
 
 [resource]
 render_priority = 0
 shader = SubResource("Shader_yapsx")
+shader_parameter/atlasScale = 1.0
 shader_parameter/textureAtlas = ExtResource("1_kuabl")
