@@ -5,9 +5,9 @@ using System.Collections.Generic;
 namespace VoxelPlugin {
 public partial class ThreadPool : Node
 {
-    private const int THREAD_COUNT = 20;
+    private const int THREAD_COUNT = 3;
     private PoolThread[] threadPool = new PoolThread[THREAD_COUNT];
-    private Queue<FunctionRequest> functionQueue = new Queue<FunctionRequest>(2000);
+    private Queue<FunctionRequest> functionQueue = new Queue<FunctionRequest>(1000);
 
     private bool poolActive = true;
 

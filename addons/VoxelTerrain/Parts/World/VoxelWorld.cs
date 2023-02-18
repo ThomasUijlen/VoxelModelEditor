@@ -23,11 +23,16 @@ public partial class VoxelWorld : Node3D
 		CHUNK_SIZE = Chunk.SIZE;
 	}
 
-	float timer = 0.0f;
+	
 	public override void _Process(double delta) {
-		timer -= Convert.ToSingle(delta);
-		if(timer > 0.0f) return;
-		timer = 1.0f;
+		ChunkUpdateTimer(Convert.ToSingle(delta));
+	}
+
+	float chunkUpdateTimer = 0.0f;
+	private void ChunkUpdateTimer(float delta) {
+		chunkUpdateTimer -= delta;
+		if(chunkUpdateTimer > 0.0f) return;
+		chunkUpdateTimer = 1.0f;
 
 		if(threadActive) return;
 		threadActive = true;
@@ -39,13 +44,12 @@ public partial class VoxelWorld : Node3D
 		DeleteOldChunks();
 		CreateNewChunks();
 		threadActive = false;
-
-		GD.Print(chunks.Count);
 	}
 
 	private void UpdateCoordLists() {
 		Vector3 cameraPosition = GetViewport().GetCamera3D().GlobalPosition;
 		Vector3I cameraChunkCoord = Chunk.PositionToChunkCoord(cameraPosition);
+		cameraChunkCoord.Y = 0;
 
 		loadedCoords.Clear();
 		lazyCoords.Clear();

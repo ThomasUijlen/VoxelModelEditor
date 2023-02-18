@@ -8,6 +8,7 @@ namespace VoxelPlugin {
 public partial class BlockType : Resource {
 	public Dictionary<SIDE, BlockTexture> textures = new Dictionary<SIDE, BlockTexture>();
 	public Color modulate;
+	public bool rendered = true;
 	public bool transparent = false;
 
 	public BlockType(Color modulate, int size, bool transparent = false) {

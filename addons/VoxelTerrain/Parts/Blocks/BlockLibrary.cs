@@ -5,12 +5,19 @@ using System.Linq;
 
 namespace VoxelPlugin {
 public static class BlockLibrary {
+	public static Mesh voxelMesh = GD.Load<Mesh>("res://addons/VoxelTerrain/Parts/Blocks/Mesh/VoxelFace.tres");
 	static Dictionary<string, BlockType> blockTypes = new Dictionary<string, BlockType>();
 
 	public static Image textureAtlas;
 	public static ImageTexture texture;
 
-	static int textureWidth = 16;
+	public static int textureWidth = 16;
+	public static float atlasScale = 0.0f;
+
+	static BlockLibrary() {
+		AddBlockType("Air", new BlockType(new Color(1,1,1,0), textureWidth, true));
+		GetBlockType("Air").rendered = false;
+	}
 
 	static public BlockType AddBlockType(string name, BlockType blockType) {
 		blockTypes.Add(name, blockType);
@@ -55,11 +62,16 @@ public static class BlockLibrary {
 
 		textureAtlas.GenerateMipmaps();
 		texture = ImageTexture.CreateFromImage(textureAtlas);
+
+		Material voxelMaterial = voxelMesh.SurfaceGetMaterial(0);
+		voxelMaterial.Set("shader_parameter/textureAtlas", BlockLibrary.texture);
+		voxelMaterial.Set("shader_parameter/atlasScale", BlockLibrary.atlasScale);
 	}
 
 	static private void ApplyTexture(Vector2I origin, int atlasWidth, float totalSize, BlockTexture blockTexture) {
 		blockTexture.UVSize = Vector2.One/atlasWidth;
 		blockTexture.UVPosition = new Vector2(origin.X, origin.Y)/totalSize;
+		atlasScale = blockTexture.UVSize.X;
 
 		for(int x = 0; x < textureWidth; x++) {
 			for(int y = 0; y < textureWidth; y++) {
