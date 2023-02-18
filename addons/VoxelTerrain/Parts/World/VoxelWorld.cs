@@ -17,15 +17,18 @@ public partial class VoxelWorld : Node3D
 	private List<Vector3I> loadedCoords = new List<Vector3I>();
 	private List<Vector3I> lazyCoords = new List<Vector3I>();
 
-	private bool threadActive = false;
+	private bool chunkThreadActive = false;
 
 	public override void _Ready() {
 		CHUNK_SIZE = Chunk.SIZE;
+		ProcessPriority = -10;
 	}
 
 	
 	public override void _Process(double delta) {
+		RendererUpdateTimer(Convert.ToSingle(delta));
 		ChunkUpdateTimer(Convert.ToSingle(delta));
+		SuggestionTimer(Convert.ToSingle(delta));
 	}
 
 	float chunkUpdateTimer = 0.0f;
@@ -34,16 +37,47 @@ public partial class VoxelWorld : Node3D
 		if(chunkUpdateTimer > 0.0f) return;
 		chunkUpdateTimer = 1.0f;
 
-		if(threadActive) return;
-		threadActive = true;
-		VoxelPluginMain.GetThreadPool(VoxelPluginMain.POOL_TYPE.GENERATION, this).RequestFunctionCall(this, "ChunkCheck");
+		if(chunkThreadActive) return;
+		chunkThreadActive = true;
+		VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.GENERATION, this).RequestFunctionCall(this, "ChunkCheck");
+	}
+
+	static float renderInterval = 0.05f;
+	float rendererUpdateTimer = 0.0f;
+	List<Chunk> suggestionChunks = new List<Chunk>();
+	private void RendererUpdateTimer(float delta) {
+		if(rendererUpdateTimer > renderInterval) rendererUpdateTimer -= renderInterval;
+		rendererUpdateTimer += delta;
+	}
+
+	public bool RenderUpdatePass() {
+		return rendererUpdateTimer > renderInterval;
+	}
+
+	float suggestionTimer = 0.0f;
+	bool suggestionThreadActive = false;
+	private void SuggestionTimer(float delta) {
+		suggestionTimer -= delta;
+		if(suggestionTimer > 0.0f) return;
+		suggestionTimer = 1.0f;
+
+		if(suggestionThreadActive) return;
+		suggestionThreadActive = true;
+		suggestionChunks.AddRange(chunks.Values);
+		VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.SUGGESTIONS, this).RequestFunctionCall(this, "ProcessChunkSuggestions");
 	}
 
 	public void ChunkCheck() {
 		UpdateCoordLists();
 		DeleteOldChunks();
 		CreateNewChunks();
-		threadActive = false;
+		chunkThreadActive = false;
+	}
+
+	public void ProcessChunkSuggestions() {
+		for(int i = 0; i < suggestionChunks.Count; i++) suggestionChunks[i]?.ProcessSuggestions();
+		suggestionChunks.Clear();
+		suggestionThreadActive = false;
 	}
 
 	private void UpdateCoordLists() {
@@ -83,7 +117,7 @@ public partial class VoxelWorld : Node3D
 		foreach(Vector3I coord in loadedCoords) {
 			if(chunks.ContainsKey(coord)) continue;
 			chunks.TryAdd(coord, null);
-			VoxelPluginMain.GetThreadPool(VoxelPluginMain.POOL_TYPE.GENERATION,this).RequestFunctionCall(this, "CreateChunk", new Godot.Collections.Array() {coord});
+			VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.GENERATION,this).RequestFunctionCall(this, "CreateChunk", new Godot.Collections.Array() {coord});
 		}
 	}
 
@@ -99,9 +133,10 @@ public partial class VoxelWorld : Node3D
 		Chunk chunk = Chunk.GetChunk(position);
 		if(chunk == null) return;
 		
-		VoxelRenderer voxelRenderer = VoxelPluginMain.GetRenderer(this);
+		VoxelRenderer voxelRenderer = VoxelMain.GetRenderer(this);
         voxelRenderer.Position = chunk.position;
 		chunk.voxelRenderer = voxelRenderer;
+		voxelRenderer.chunk = chunk;
 		voxelRenderer.RequestUpdate(chunk.grid);
         if(!voxelRenderer.IsInsideTree()) AddChild(voxelRenderer);
 	}

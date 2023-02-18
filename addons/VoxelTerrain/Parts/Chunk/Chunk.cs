@@ -11,6 +11,7 @@ public partial class Chunk
     public static Vector3I SIZE = new Vector3I(16,256,16);
     public Block[,,] grid;
 
+    public bool automaticUpdating = false;
     public bool generating = true;
     public bool hasRenderer = false;
     public VoxelRenderer voxelRenderer;
@@ -23,27 +24,33 @@ public partial class Chunk
         CreateVoxelGrid();
         chunkList.TryAdd(PositionToChunkCoord(position), this);
 
-        generator = new NoiseLayer("Stone",10f);
+        generator = new NoiseLayer("Stone",30f);
         ((NoiseLayer) generator).AddLayer("Dirt");
         ((NoiseLayer) generator).AddLayer("Dirt");
         ((NoiseLayer) generator).AddLayer("Dirt");
         ((NoiseLayer) generator).AddLayer("Grass");
         generator.Generate(this);
 
+        generator = new NoiseCaves(2f);
+        generator.Generate(this);
+
+        automaticUpdating = true;
         generating = false;
-        Update();
+        Update(false);
         UpdateSurroundingChunks();
     }
 
     public void Remove() {
         chunkList.TryRemove(PositionToChunkCoord(position), out _);
-        grid = null;
         DeleteVoxelRenderer();
     }
 
     public void DeleteVoxelRenderer() {
         hasRenderer = false;
-        if(voxelRenderer != null) VoxelPluginMain.ReturnRenderer(voxelRenderer);
+        if(voxelRenderer != null) {
+            voxelRenderer.chunk = null;
+            VoxelMain.ReturnRenderer(voxelRenderer);
+        }
         voxelRenderer = null;
     }
 
@@ -65,12 +72,8 @@ public partial class Chunk
     }
 
     public void Update(bool fromBlock = true) {
+        if(!automaticUpdating) return;
         CreateVoxelRenderer();
-        // if(drawnBlocks > 0) {
-        //     CreateVoxelRenderer();
-        // } else {
-        //     DeleteVoxelRenderer();
-        // }
         voxelRenderer?.RequestUpdate(grid, fromBlock);
     }
 
@@ -83,9 +86,9 @@ public partial class Chunk
 		Vector3.Back
 	};
 
-    public void UpdateSurroundingChunks() {
+    public void UpdateSurroundingChunks(bool fromBlock = false) {
         for(int i = 0; i < neighbours.Length; i++) {
-			Chunk.GetChunk(position + neighbours[i]*SIZE)?.Update(false);
+			Chunk.GetChunk(position + neighbours[i]*SIZE)?.Update(fromBlock);
 		}
     }
 
@@ -97,7 +100,10 @@ public partial class Chunk
 
     public static Chunk GetChunk(Vector3 position) {
         Vector3I coord = PositionToChunkCoord(position);
-        if(chunkList.ContainsKey(coord)) return chunkList[coord];
+        if(chunkList.ContainsKey(coord)) {
+            Chunk chunk = chunkList[coord];
+            return chunk;
+        }
         return null;
     }
 
@@ -107,16 +113,31 @@ public partial class Chunk
         return block.blockType;
     }
 
+    public static BlockType GetBlockType(Chunk chunk, Vector3 position) {
+        Block block = GetBlock(chunk, position);
+        if(block == null) return null;
+        return block.blockType;
+    }
+
     public static Block GetBlock(Vector3 position) {
         Vector3I chunkCoord = PositionToChunkCoord(position);
         
         if(chunkList.ContainsKey(chunkCoord)) {
             Chunk chunk = chunkList[chunkCoord];
-            Vector3I blockCoord = chunk.PositionToCoord(position);
-            return chunk.grid[blockCoord.X, blockCoord.Y, blockCoord.Z];
+            return chunk.GetBlockLocal(position); 
         }
         
         return null;
+    }
+
+    public static Block GetBlock(Chunk chunk, Vector3 position) {
+        Block block = chunk?.GetBlockLocal(position);
+        if(block != null) return block;
+        return GetBlock(position);
+    }
+
+    public Block GetRandomBlock(RandomNumberGenerator rng) {
+        return grid[rng.RandiRange(0,SIZE.X-1),rng.RandiRange(0,SIZE.Y-1),rng.RandiRange(0,SIZE.Z-1)];
     }
 
     public static bool SetBlock(Vector3 position, BlockType blockType, int priority = -1) {
@@ -127,6 +148,46 @@ public partial class Chunk
         }
 
         return false;
+    }
+
+    public static bool SetBlock(Chunk chunk, Vector3 position, BlockType blockType, int priority = -1) {
+        Block block = chunk.GetBlockLocal(position);
+        if(block != null) {
+            block.SetBlockType(blockType, priority);
+            return true;
+        }
+
+        return SetBlock(position, blockType, priority);
+    }
+
+    public static void BulkSet(List<Vector3> positions, BlockType blockType, int priority = -1) {
+        List<Chunk> affectedChunks = new List<Chunk>();
+
+        for(int i = 0; i < positions.Count; i++) {
+            Vector3 position = positions[i];
+            Chunk chunk = GetChunk(position);
+            if(chunk == null) continue;
+            Block block = GetBlock(chunk, position);
+            if(block == null) continue;
+            affectedChunks.Add(chunk);
+            block.SetBlockType(blockType, priority, false);
+        }
+
+        foreach(Chunk chunk in affectedChunks) {
+            chunk.Update();
+            chunk.UpdateSurroundingChunks(true);
+        }
+    }
+
+    private Block GetBlockLocal(Vector3 position) {
+        Vector3I blockCoord = PositionToCoord(position);
+        if(blockCoord.X >= 0
+            && blockCoord.Y >= 0
+            && blockCoord.Z >= 0
+            && blockCoord.X < SIZE.X
+            && blockCoord.Y < SIZE.Y
+            && blockCoord.Z < SIZE.Z) return grid[blockCoord.X, blockCoord.Y, blockCoord.Z];
+        return null;
     }
 
     public Vector3I PositionToCoord(Vector3 position) {

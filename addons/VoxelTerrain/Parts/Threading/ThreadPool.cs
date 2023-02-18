@@ -5,9 +5,9 @@ using System.Collections.Generic;
 namespace VoxelPlugin {
 public partial class ThreadPool : Node
 {
-    private const int THREAD_COUNT = 3;
+    private const int THREAD_COUNT = 5;
     private PoolThread[] threadPool = new PoolThread[THREAD_COUNT];
-    private Queue<FunctionRequest> functionQueue = new Queue<FunctionRequest>(1000);
+    private List<FunctionRequest> functionQueue = new List<FunctionRequest>(1000);
 
     private bool poolActive = true;
 
@@ -39,7 +39,8 @@ public partial class ThreadPool : Node
             }
             
             if(!poolThread.active) {
-                poolThread.CallFunction(functionQueue.Dequeue());
+                poolThread.CallFunction(functionQueue[0]);
+                functionQueue.RemoveAt(0);
             }
         }
     }
@@ -51,12 +52,22 @@ public partial class ThreadPool : Node
         return false;
     }
 
-    public void RequestFunctionCall(Node node, string functionName) {
-        functionQueue.Enqueue(new FunctionRequest(node, functionName));
+    public FunctionRequest RequestFunctionCall(Node node, string functionName) {
+        FunctionRequest functionRequest = new FunctionRequest(node, functionName);
+        functionRequest.pool = this;
+        functionQueue.Add(functionRequest);
+        return functionRequest;
     }
 
-    public void RequestFunctionCall(Node node, string functionName, Godot.Collections.Array parameters) {
-        functionQueue.Enqueue(new FunctionRequest(node, functionName, parameters));
+    public FunctionRequest RequestFunctionCall(Node node, string functionName, Godot.Collections.Array parameters) {
+        FunctionRequest functionRequest = new FunctionRequest(node, functionName, parameters);
+        functionRequest.pool = this;
+        functionQueue.Add(functionRequest);
+        return functionRequest;
+    }
+
+    public void CancelRequest(FunctionRequest request) {
+        if(functionQueue.Contains(request)) functionQueue.Remove(request);
     }
 
     private void ThreadFunction(int i) {
@@ -104,6 +115,7 @@ public partial class ThreadPool : Node
 
         public void CallFunction(FunctionRequest functionRequest) {
             this.functionRequest = functionRequest;
+            functionRequest.processed = true;
             active = true;
             semaphore.Post();
         }
@@ -114,10 +126,12 @@ public partial class ThreadPool : Node
         }
     }
 
-    private class FunctionRequest {
+    public class FunctionRequest {
         public Node node;
         public String functionName;
         public Godot.Collections.Array parameters;
+        public bool processed = false;
+        public ThreadPool pool;
 
         public FunctionRequest(Node node, String functionName, Godot.Collections.Array parameters) : this(node, functionName) {
             this.parameters = parameters;

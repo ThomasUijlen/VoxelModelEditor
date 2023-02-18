@@ -5,17 +5,27 @@ using System.Collections.Generic;
 namespace VoxelPlugin {
 public partial class VoxelRenderer : Node3D
 {
+	enum STATE {
+		DISABLED,
+		IDLE,
+		WAITING_FOR_UPDATE,
+		UPDATING,
+		WAIT_FOR_RENDER_PASS
+	}
+
+	private STATE activeState = STATE.DISABLED;
+
 	Block[,,] recentGrid;
 	Block[,,] activeGrid;
-	bool threadActive = false;
 
 	Queue<MeshInstance> meshes = new Queue<MeshInstance>();
 	List<MeshInstance> meshList = new List<MeshInstance>();
 
 	int quadCount = 500;
 
-	private VoxelPluginMain.POOL_TYPE poolType = VoxelPluginMain.POOL_TYPE.RENDERING;
+	private VoxelMain.POOL_TYPE poolType = VoxelMain.POOL_TYPE.RENDERING;
 	public VoxelWorld world;
+	public Chunk chunk;
 	
 	public override void _Ready() {
 		for(int i = 0; i < 2; i++) {
@@ -25,43 +35,50 @@ public partial class VoxelRenderer : Node3D
 
 			multiMeshInstance.mesh = RenderingServer.MultimeshCreate();
 			RenderingServer.InstanceSetBase(multiMeshInstance.instance, multiMeshInstance.mesh);
+			RenderingServer.InstanceGeometrySetCastShadowsSetting(multiMeshInstance.instance, RenderingServer.ShadowCastingSetting.DoubleSided);
 			RenderingServer.MultimeshSetMesh(multiMeshInstance.mesh, BlockLibrary.voxelMesh.GetRid());
 			RenderingServer.MultimeshAllocateData(multiMeshInstance.mesh, quadCount, RenderingServer.MultimeshTransformFormat.Transform3D, true);
+			RenderingServer.InstanceSetVisible(multiMeshInstance.instance, false);
 			meshes.Enqueue(multiMeshInstance);
 			meshList.Add(multiMeshInstance);
 		}
 	}
 
-	float cooldown = 0.0f;
-	bool processing = false;
 	public override void _Process(double delta) {
-		if(!processing || !active) return;
+		switch(activeState) {
+			case STATE.WAITING_FOR_UPDATE:
+				if(world.RenderUpdatePass()) {
+					activeState = STATE.UPDATING;
+					activeGrid = (Block[,,]) recentGrid.Clone();
+					VoxelMain.GetThreadPool(poolType, this).RequestFunctionCall(this, "UpdateMesh");
+					poolType = VoxelMain.POOL_TYPE.RENDERING_CLOSE;
+				}
+			break;
 
-		cooldown -= Convert.ToSingle(delta);
+			case STATE.WAIT_FOR_RENDER_PASS:
+				if(world.RenderUpdatePass()) {
+					activeState = changePending ? STATE.WAITING_FOR_UPDATE : STATE.IDLE;
+					changePending = false;
+					MeshInstance newMeshInstance = meshes.Dequeue();
+					MeshInstance oldMeshInstance = meshes.Dequeue();
 
-		if(cooldown <= 0.0f) {
-			if(threadActive) return;
-			processing = false;
-			threadActive = true;
-			cancelThread = false;
-			activeGrid = (Block[,,]) recentGrid.Clone();
-			VoxelPluginMain.GetThreadPool(poolType, this).RequestFunctionCall(this, "UpdateMesh");
-			poolType = VoxelPluginMain.POOL_TYPE.RENDERING_CLOSE;
+					RenderingServer.InstanceSetVisible(newMeshInstance.instance, true);
+					RenderingServer.InstanceSetVisible(oldMeshInstance.instance, false);
+
+					meshes.Enqueue(oldMeshInstance);
+					meshes.Enqueue(newMeshInstance);
+				}
+			break;
 		}
 	}
 
-	bool active = false;
-	bool cancelThread = false;
-
 	public void Activate() {
-		active = true;
-		cooldown = 1.0f;
-		poolType = VoxelPluginMain.POOL_TYPE.RENDERING;
+		activeState = STATE.IDLE;
+		poolType = VoxelMain.POOL_TYPE.RENDERING;
 	}
 
 	public void Deactivate() {
-		active = false;
-		cancelThread = true;
+		activeState = STATE.DISABLED;
 
 		for(int i = 0; i < 2; i++) {
 			MeshInstance meshInstance = meshes.Dequeue();
@@ -70,20 +87,23 @@ public partial class VoxelRenderer : Node3D
 		}
 	}
 
+	bool changePending = false;
 	public void RequestUpdate(Block[,,] grid, bool close = true) {
-		if(!close) poolType = VoxelPluginMain.POOL_TYPE.RENDERING;
+		if(!close) poolType = VoxelMain.POOL_TYPE.RENDERING;
 		recentGrid = grid;
-		processing = true;
-		if(cooldown < 0.0f) cooldown = 0.05f;
+		
+		if(activeState == STATE.IDLE) {
+			activeState = STATE.WAITING_FOR_UPDATE;
+		} else {
+			changePending = true;
+		}
 	}
 
 	
 	private Dictionary<BlockTexture, Dictionary<SIDE, List<Vector3>>> faceList = new Dictionary<BlockTexture, Dictionary<SIDE, List<Vector3>>>();
 	private List<Quad> quads = new List<Quad>();
-	int faceCount = 0;
 
 	public void UpdateMesh() {
-		faceCount = 0;
 		CollectFaces(activeGrid);
 		CollectQuads();
 
@@ -91,20 +111,15 @@ public partial class VoxelRenderer : Node3D
 		
 		GenerateMesh(newMeshInstance);
 
-		RenderingServer.InstanceSetVisible(newMeshInstance.instance, true);
-
 		MeshInstance oldMeshInstance = meshes.Dequeue();
-		RenderingServer.InstanceSetVisible(oldMeshInstance.instance, false);
 
-		meshes.Enqueue(oldMeshInstance);
 		meshes.Enqueue(newMeshInstance);
-
-		//GD.Print("faces collected "+GD.VarToStr(faceCount)+"    quads collected "+GD.VarToStr(quads.Count));
+		meshes.Enqueue(oldMeshInstance);
 
 		faceList.Clear();
 		quads.Clear();
 
-		threadActive = false;
+		activeState = STATE.WAIT_FOR_RENDER_PASS;
 	}
 
 	private void CollectFaces(Block[,,] grid) {
@@ -131,7 +146,7 @@ public partial class VoxelRenderer : Node3D
 		if(!blockType.rendered) return;
 		Vector3 direction = Block.SideToVector(side);
 
-		BlockType neighbour = Chunk.GetBlockType(block.position + direction);
+		BlockType neighbour = Chunk.GetBlockType(chunk, block.position + direction);
 		if(neighbour == null || (!neighbour.transparent && neighbour.rendered)) return;
 
 		BlockTexture blockTexture = blockType.GetTexture(side);
@@ -148,7 +163,6 @@ public partial class VoxelRenderer : Node3D
 				Vector3[] scanDirections = scanTable[sidePositionPair.Key];
 
 				foreach(Vector3 position in sidePositionPair.Value) {
-					faceCount += 1;
 					if(consumedFaces.Contains(position)) continue;
 					Vector3 currentPosition = position;
 
@@ -187,19 +201,18 @@ public partial class VoxelRenderer : Node3D
 	}
 
 	private void GenerateMesh(MeshInstance meshInstance) {
-		if(quads.Count == 0) {
-			RenderingServer.InstanceSetVisible(meshInstance.instance, false);
-			return;
+		if(quads.Count >= quadCount) {
+			//RenderingServer.InstanceSetVisible(meshInstance.instance, true);
+			while(quads.Count >= quadCount) quadCount += 250;
 		}
 
-		if(quads.Count >= quadCount) {
-			while(quads.Count >= quadCount) quadCount += 250;
-			foreach(MeshInstance mesh in meshList) {
-				RenderingServer.MultimeshAllocateData(mesh.mesh, quadCount, RenderingServer.MultimeshTransformFormat.Transform3D, true);
-			}
+		if(RenderingServer.MultimeshGetInstanceCount(meshInstance.mesh) < quadCount) {
+			RenderingServer.MultimeshAllocateData(meshInstance.mesh, quadCount, RenderingServer.MultimeshTransformFormat.Transform3D, true);
 		}
 
 		RenderingServer.MultimeshSetVisibleInstances(meshInstance.mesh, quads.Count);
+
+		//RandomNumberGenerator rng = new RandomNumberGenerator();
 
 		for(int i = 0; i < quads.Count; i ++) {
 			Quad quad = quads[i];
@@ -208,7 +221,6 @@ public partial class VoxelRenderer : Node3D
 			transform.Origin += quad.position + quad.scale*0.5f;
 
 			Vector2 UV2 = UVFlipTable[quad.quadIndex] ? quad.scale2D : new Vector2(quad.scale2D.Y, quad.scale2D.X);
-			// Vector2 UV2 = quad.scale2D;
 
 			Color color = new Color(
 				quad.blockTexture.UVPosition.X,
@@ -216,6 +228,8 @@ public partial class VoxelRenderer : Node3D
 				1.0f/UV2.X,
 				1.0f/UV2.Y
 			);
+
+			//Color color = new Color(rng.RandfRange(0f,1f),rng.RandfRange(0f,1f),rng.RandfRange(0f,1f));
 
 			RenderingServer.MultimeshInstanceSetTransform(meshInstance.mesh, i, transform);
 			RenderingServer.MultimeshInstanceSetColor(meshInstance.mesh, i, color);

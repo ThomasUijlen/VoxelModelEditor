@@ -62,7 +62,6 @@ public static class BlockLibrary {
 
 		textureAtlas.GenerateMipmaps();
 		texture = ImageTexture.CreateFromImage(textureAtlas);
-
 		Material voxelMaterial = voxelMesh.SurfaceGetMaterial(0);
 		voxelMaterial.Set("shader_parameter/textureAtlas", BlockLibrary.texture);
 		voxelMaterial.Set("shader_parameter/atlasScale", BlockLibrary.atlasScale);

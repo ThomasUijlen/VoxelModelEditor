@@ -12,19 +12,19 @@ public partial class main : Sprite2D
 	public override void _Ready()
 	{
 		rng.Randomize();
-		stone = new BlockType(Image.LoadFromFile("res://Textures/Stone.png"), new Color(1,1,1));
+		stone = new BlockType(GD.Load<CompressedTexture2D>("res://Textures/Stone.tres").GetImage(), new Color(1,1,1));
 		log = new BlockType(
 			new Dictionary<SIDE, Image>() {
-				{SIDE.DEFAULT, Image.LoadFromFile("res://Textures/Logs.png")},
-				{SIDE.TOP, Image.LoadFromFile("res://Textures/LogsTop.png")},
-				{SIDE.BOTTOM, Image.LoadFromFile("res://Textures/LogsTop.png")}
+				{SIDE.DEFAULT, GD.Load<CompressedTexture2D>("res://Textures/Logs.tres").GetImage()},
+				{SIDE.TOP, GD.Load<CompressedTexture2D>("res://Textures/LogsTop.tres").GetImage()},
+				{SIDE.BOTTOM, GD.Load<CompressedTexture2D>("res://Textures/LogsTop.tres").GetImage()}
 				}, new Color(1,1,1));
-		leaves = new BlockType(Image.LoadFromFile("res://Textures/Leaves.png"), new Color(1,1,1), true);
+		leaves = new BlockType(GD.Load<CompressedTexture2D>("res://Textures/Leaves.tres").GetImage(), new Color(1,1,1), true);
 
 		BlockLibrary.AddBlockType("Default", new BlockType(new Color(1,1,1), 16));
 		BlockLibrary.AddBlockType("Stone", stone);
-		BlockLibrary.AddBlockType("Dirt", new BlockType(Image.LoadFromFile("res://Textures/Dirt.png"), new Color(1,1,1)));
-		BlockLibrary.AddBlockType("Grass", new BlockType(Image.LoadFromFile("res://Textures/Grass.png"), new Color(1,1,1)));
+		BlockLibrary.AddBlockType("Dirt", new BlockType(GD.Load<CompressedTexture2D>("res://Textures/Dirt.tres").GetImage(), new Color(1,1,1)));
+		BlockLibrary.AddBlockType("Grass", new BlockType(GD.Load<CompressedTexture2D>("res://Textures/Grass.tres").GetImage(), new Color(1,1,1)));
 		BlockLibrary.AddBlockType("Leaves", leaves);
 		BlockLibrary.AddBlockType("Log", log);
 
@@ -78,9 +78,27 @@ public partial class main : Sprite2D
 			}
 		}
 
+		// if(Input.IsActionPressed("MouseMiddle")) {
+		// 	Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*50f;
+		// 	int radius = 12;
+
+		// 	for(int x = -radius; x < radius; x++) {
+		// 		for(int y = -radius; y < radius; y++) {
+		// 			for(int z = -radius; z < radius; z++) {
+		// 				Vector3 pos = new Vector3(x,y,z);
+		// 				float d = pos.DistanceTo(Vector3.Zero);
+		// 				if(d > radius) continue;
+		// 				Chunk.SetBlock(startCoord+pos, BlockLibrary.GetBlockType("Air"));
+		// 			}
+		// 		}
+		// 	}
+		// }
+
 		if(Input.IsActionPressed("MouseMiddle")) {
 			Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*50f;
 			int radius = 12;
+
+			List<Vector3> positions = new List<Vector3>();
 
 			for(int x = -radius; x < radius; x++) {
 				for(int y = -radius; y < radius; y++) {
@@ -88,10 +106,12 @@ public partial class main : Sprite2D
 						Vector3 pos = new Vector3(x,y,z);
 						float d = pos.DistanceTo(Vector3.Zero);
 						if(d > radius) continue;
-						Chunk.SetBlock(startCoord+pos, BlockLibrary.GetBlockType("Air"));
+						positions.Add(startCoord+pos);
 					}
 				}
 			}
+
+			Chunk.BulkSet(positions, BlockLibrary.GetBlockType("Air"));
 		}
 
 		time += Convert.ToSingle(delta);
