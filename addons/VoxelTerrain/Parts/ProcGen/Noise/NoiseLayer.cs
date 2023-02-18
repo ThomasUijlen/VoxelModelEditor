@@ -36,7 +36,7 @@ public class NoiseLayer : IGenerator
                     if(n > 0.0f) {
                         for(int layer = 0; layer < layers.Count; layer++) {
                             Vector3I pos = new Vector3I(0,layer,0);
-                            Chunk.SuggestChange(block.position+pos, BlockLibrary.GetBlockType(layers[layer]));
+                            Chunk.SuggestChange(chunk, block.position+pos, BlockLibrary.GetBlockType(layers[layer]), 0);
                         }
                     }
                 }

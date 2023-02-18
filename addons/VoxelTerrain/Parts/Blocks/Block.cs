@@ -26,14 +26,14 @@ public class Block {
 		this.chunk = chunk;
 	}
 
-	public void SetBlockType(BlockType blockType, int priority = -1) {
+	public void SetBlockType(BlockType blockType, int priority = -1, bool updateChunk = true) {
 		if(priority > 0 && priority < this.priority) return;
 
 		// if(this.blockType == null && blockType != null) Interlocked.Increment(ref chunk.drawnBlocks);
 		// else if(this.blockType != null && blockType == null) Interlocked.Decrement(ref chunk.drawnBlocks);
 
 		this.blockType = blockType;
-		if(!chunk.generating) UpdateBlocks();	
+		if(updateChunk && chunk.automaticUpdating) UpdateBlocks();	
 	}
 
 	private void UpdateBlocks() {

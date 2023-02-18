@@ -8,10 +8,16 @@ public partial class Chunk
 {
     private static ConcurrentDictionary<Vector3I, SuggestionLib> chunkSuggestions = new ConcurrentDictionary<Vector3I, SuggestionLib>();
 
-    public static void SuggestChange(Vector3 position, BlockType blockType, int priority = 0) {
-        Vector3I chunkCoord = Chunk.PositionToChunkCoord(position);
+    public static void SuggestChange(Chunk chunk, Vector3 position, BlockType blockType, int priority = 0) {
+        if(chunk != null) {
+            Chunk changedChunk = Chunk.GetChunk(position);
+            if(chunk == changedChunk) {
+                Chunk.SetBlock(position, blockType, priority);
+                return;
+            }
+        }
 
-        if(Chunk.SetBlock(position, blockType, priority)) return;
+        Vector3I chunkCoord = Chunk.PositionToChunkCoord(position);
 
         Suggestion suggestion = new Suggestion(position, blockType, priority);
         SuggestionLib lib = chunkSuggestions.AddOrUpdate(chunkCoord, new SuggestionLib(), (c, s) => s);
@@ -19,12 +25,16 @@ public partial class Chunk
     }
 
     public void ProcessSuggestions() {
+        if(generating) return;
         Vector3I chunkCoord = Chunk.PositionToChunkCoord(position);
         if(!chunkSuggestions.ContainsKey(chunkCoord)) return;
 
         SuggestionLib suggestionLib = chunkSuggestions[chunkCoord];
+        if(suggestionLib.suggestions.Count == 0) return;
 
-        int tries = 500;
+        automaticUpdating = false;
+
+        int tries = 10000;
         while(suggestionLib.suggestions.Count > 0 && tries > 0) {
             tries -= 1;
             
@@ -34,7 +44,9 @@ public partial class Chunk
             }
         }
 
-        chunkSuggestions.TryRemove(chunkCoord, out _);
+        automaticUpdating = true;
+        Update(false);
+        UpdateSurroundingChunks();
     }
 }
 
