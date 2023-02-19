@@ -34,7 +34,7 @@ public partial class Chunk
 
         automaticUpdating = false;
 
-        int tries = 10000;
+        int tries = Chunk.SIZE.X*Chunk.SIZE.Y*Chunk.SIZE.Z;
         while(suggestionLib.suggestions.Count > 0 && tries > 0) {
             tries -= 1;
             
@@ -45,6 +45,7 @@ public partial class Chunk
         }
 
         automaticUpdating = true;
+        InitBlockSides();
         Update(false);
         UpdateSurroundingChunks();
     }

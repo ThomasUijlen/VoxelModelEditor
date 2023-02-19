@@ -45,6 +45,13 @@ public partial class ThreadPool : Node
         }
     }
 
+    public bool ThreadFree() {
+        for(int i = 0; i < threadPool.Length; i++) {
+            if(!threadPool[i].active) return true;
+        }
+        return false;
+    }
+
     public bool ThreadsActive() {
         for(int i = 0; i < threadPool.Length; i++) {
             if(threadPool[i].active) return true;

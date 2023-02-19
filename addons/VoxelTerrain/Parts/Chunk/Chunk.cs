@@ -31,11 +31,12 @@ public partial class Chunk
         ((NoiseLayer) generator).AddLayer("Grass");
         generator.Generate(this);
 
-        generator = new NoiseCaves(2f);
+        generator = new NoiseCaves(1f);
         generator.Generate(this);
 
         automaticUpdating = true;
         generating = false;
+        InitBlockSides();
         Update(false);
         UpdateSurroundingChunks();
     }
@@ -66,6 +67,20 @@ public partial class Chunk
                     block.position = new Vector3(x,y,z) + position;
                     block.SetBlockType(air);
                     grid[x,y,z] = block;
+                }
+            }
+        }
+    }
+
+    private void InitBlockSides() {
+        for(int x = 0; x < SIZE.X; x++) {
+            for(int y = 0; y < SIZE.Y; y++) {
+                for(int z = 0; z < SIZE.Z; z++) {
+                    Block block = grid[x,y,z];
+                    
+                    if(x == 0 || y == 0 || z == 0
+                    || x == SIZE.X-1 || y == SIZE.Y-1 || z == SIZE.Z-1) block.UpdateSurroundingBlocks();
+                    block.UpdateSelf();
                 }
             }
         }
