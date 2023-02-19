@@ -1,21 +1,32 @@
 using Godot;
 using System;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace VoxelPlugin {
-	public enum SIDE {DEFAULT, TOP, BOTTOM, LEFT, RIGHT, FRONT, BACK};
+	[Flags]
+	public enum SIDE {
+		DEFAULT = 1,
+		TOP = 2,
+		BOTTOM = 4,
+		LEFT = 8,
+		RIGHT = 16,
+		FRONT = 32,
+		BACK = 64
+	};
 
 public class Block {
 
-	static Vector3[] neighbours = new Vector3[] {
-		Vector3.Zero,
-		Vector3.Up,
-		Vector3.Down,
-		Vector3.Left,
-		Vector3.Right,
-		Vector3.Forward,
-		Vector3.Back
+	static SIDE[] neighbours = new SIDE[] {
+		SIDE.TOP,
+		SIDE.BOTTOM,
+		SIDE.LEFT,
+		SIDE.RIGHT,
+		SIDE.FRONT,
+		SIDE.BACK
 	};
+
+	public SIDE activeSides = 0;
 
 	public Vector3 position;
 	public BlockType blockType;
@@ -33,12 +44,41 @@ public class Block {
 		// else if(this.blockType != null && blockType == null) Interlocked.Decrement(ref chunk.drawnBlocks);
 
 		this.blockType = blockType;
-		if(updateChunk && chunk.automaticUpdating) UpdateBlocks();	
+		UpdateSelf();
+		SetSurroundingBlocks();
+		if(updateChunk && chunk.automaticUpdating) UpdateChunks();	
 	}
 
-	private void UpdateBlocks() {
+	public void UpdateSelf() {
 		for(int i = 0; i < neighbours.Length; i++) {
-			Chunk.GetChunk(position + neighbours[i])?.Update();
+			SIDE side = neighbours[i];
+			if(HasToRender(blockType, Chunk.GetBlockType(chunk, position+SideToVector(side)))) {
+				AddSide(side);
+			} else {
+				RemoveSide(side);
+			}
+		}
+	}
+
+	public void SetSurroundingBlocks() {
+		for(int i = 0; i < neighbours.Length; i++) {
+			SIDE side = neighbours[i];
+			Block block = Chunk.GetBlock(chunk, position+SideToVector(side));
+			if(block == null) continue;
+
+			if(HasToRender(block.blockType, blockType)) {
+				block.AddSide(GetOppositeSide(side));
+			} else {
+				block.RemoveSide(GetOppositeSide(side));
+			}
+		}
+	}
+
+	private void UpdateChunks() {
+		chunk?.Update();
+
+		for(int i = 0; i < neighbours.Length; i++) {
+			Chunk.GetChunk(position + SideToVector(neighbours[i]))?.Update();
 		}
 	}
 
@@ -53,6 +93,48 @@ public class Block {
 		}
 
 		return Vector3.Zero;
+	}
+
+	public static SIDE GetOppositeSide(SIDE side) {
+		switch(side) {
+			case SIDE.TOP: return SIDE.BOTTOM;
+			case SIDE.BOTTOM: return SIDE.TOP;
+			case SIDE.LEFT: return SIDE.RIGHT;
+			case SIDE.RIGHT: return SIDE.LEFT;
+			case SIDE.FRONT: return SIDE.BACK;
+			case SIDE.BACK: return SIDE.FRONT;
+		}
+
+		return SIDE.DEFAULT;
+	}
+
+	public static bool HasToRender(BlockType a, BlockType b) {
+		if(a == null) return false;
+		if(b == null) return false;
+
+		if(!a.rendered) return false;
+
+		if(!b.rendered) {
+			if(!b.transparent) return false;
+			if(!a.transparent && b.transparent) return true;
+			if(a.transparent && b.transparent) return false;
+		}
+
+		return false;
+	}
+
+	public void AddSide(SIDE side) {
+		activeSides |= side;
+	}
+
+	public void RemoveSide(SIDE side) {
+		activeSides &= ~side;
+	}
+
+	public IEnumerable<SIDE> GetActiveSides() {
+		foreach (SIDE value in Enum.GetValues(activeSides.GetType()))
+			if (activeSides.HasFlag(value))
+				yield return value;
 	}
 }
 }

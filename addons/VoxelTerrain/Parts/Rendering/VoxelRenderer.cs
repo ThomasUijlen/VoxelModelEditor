@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace VoxelPlugin {
 public partial class VoxelRenderer : Node3D
@@ -26,6 +27,8 @@ public partial class VoxelRenderer : Node3D
 	private VoxelMain.POOL_TYPE poolType = VoxelMain.POOL_TYPE.RENDERING;
 	public VoxelWorld world;
 	public Chunk chunk;
+
+	static ConcurrentBag<long> times = new ConcurrentBag<long>();
 	
 	public override void _Ready() {
 		for(int i = 0; i < 2; i++) {
@@ -42,6 +45,13 @@ public partial class VoxelRenderer : Node3D
 			meshes.Enqueue(multiMeshInstance);
 			meshList.Add(multiMeshInstance);
 		}
+
+		long total = 0;
+		foreach(long time in times) {
+			total += time;
+		}
+
+		if(times.Count > 0) GD.Print(total/times.Count);
 	}
 
 	public override void _Process(double delta) {
@@ -104,6 +114,7 @@ public partial class VoxelRenderer : Node3D
 	private List<Quad> quads = new List<Quad>();
 
 	public void UpdateMesh() {
+		var watch = System.Diagnostics.Stopwatch.StartNew();
 		CollectFaces(activeGrid);
 		CollectQuads();
 
@@ -120,6 +131,10 @@ public partial class VoxelRenderer : Node3D
 		quads.Clear();
 
 		activeState = STATE.WAIT_FOR_RENDER_PASS;
+
+		watch.Stop();
+		var elapsedMs = watch.ElapsedMilliseconds;
+		times.Add(elapsedMs);
 	}
 
 	private void CollectFaces(Block[,,] grid) {
@@ -129,7 +144,7 @@ public partial class VoxelRenderer : Node3D
             for(int y = 0; y < size.Y; y++) {
                 for(int z = 0; z < size.Z; z++) {
 					Block block = grid[x,y,z];
-					if(block.blockType == null) continue;
+					if(block.blockType == null || !block.blockType.rendered) continue;
 					CollectFace(block, SIDE.TOP);
 					CollectFace(block, SIDE.BOTTOM);
 					CollectFace(block, SIDE.LEFT);
@@ -143,11 +158,9 @@ public partial class VoxelRenderer : Node3D
 
 	private void CollectFace(Block block, SIDE side) {
 		BlockType blockType = block.blockType;
-		if(!blockType.rendered) return;
 		Vector3 direction = Block.SideToVector(side);
 
-		BlockType neighbour = Chunk.GetBlockType(chunk, block.position + direction);
-		if(neighbour == null || (!neighbour.transparent && neighbour.rendered)) return;
+		if(!block.activeSides.HasFlag(side)) return;
 
 		BlockTexture blockTexture = blockType.GetTexture(side);
 		if(!faceList.ContainsKey(blockTexture)) faceList.Add(blockTexture, new Dictionary<SIDE, List<Vector3>>());
@@ -202,7 +215,6 @@ public partial class VoxelRenderer : Node3D
 
 	private void GenerateMesh(MeshInstance meshInstance) {
 		if(quads.Count >= quadCount) {
-			//RenderingServer.InstanceSetVisible(meshInstance.instance, true);
 			while(quads.Count >= quadCount) quadCount += 250;
 		}
 
