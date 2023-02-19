@@ -31,7 +31,7 @@ public partial class Chunk
         ((NoiseLayer) generator).AddLayer("Grass");
         generator.Generate(this);
 
-        generator = new NoiseCaves(2f);
+        generator = new NoiseCaves(1f);
         generator.Generate(this);
 
         automaticUpdating = true;

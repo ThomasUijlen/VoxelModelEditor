@@ -58,12 +58,15 @@ public partial class VoxelRenderer : Node3D
 		switch(activeState) {
 			case STATE.WAITING_FOR_UPDATE:
 				timer += Convert.ToSingle(delta);
-				if(timer > 0.05f) {
-					timer = 0f;
-					activeState = STATE.UPDATING;
-					activeGrid = (Block[,,]) recentGrid.Clone();
-					VoxelMain.GetThreadPool(poolType, this).RequestFunctionCall(this, "UpdateMesh");
-					poolType = VoxelMain.POOL_TYPE.RENDERING_CLOSE;
+				if(timer > 0.1f) {
+					ThreadPool pool = VoxelMain.GetThreadPool(poolType, this);
+					if(pool.ThreadFree()) {
+						timer = 0f;
+						activeState = STATE.UPDATING;
+						activeGrid = (Block[,,]) recentGrid.Clone();
+						pool.RequestFunctionCall(this, "UpdateMesh");
+						poolType = VoxelMain.POOL_TYPE.RENDERING_CLOSE;
+					}
 				}
 			break;
 		}
@@ -109,7 +112,6 @@ public partial class VoxelRenderer : Node3D
 		MeshInstance oldMeshInstance = meshes.Dequeue();
 		
 		GenerateMesh(newMeshInstance);
-
 
 		RenderingServer.InstanceSetVisible(newMeshInstance.instance, true);
 		RenderingServer.InstanceSetVisible(oldMeshInstance.instance, false);
@@ -174,7 +176,7 @@ public partial class VoxelRenderer : Node3D
 					int quadWidth = -1;
 					for(int i = 0; i < quadLength; i++) {
 						int width = ScanDirection(currentPosition + scanDirections[0]*i, 1, scanDirections[1], remainingFaces);
-						if(quadWidth < 1 || width < quadWidth) quadWidth = width;
+						if(quadWidth == -1 || width < quadWidth) quadWidth = width;
 						if(quadWidth == 1) break;
 					}
 
