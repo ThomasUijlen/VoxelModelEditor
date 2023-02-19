@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 namespace VoxelPlugin {
 public partial class Chunk
 {
-    private static ConcurrentDictionary<Vector3I, Chunk> chunkList = new ConcurrentDictionary<Vector3I, Chunk>();
+    public static Dictionary<Vector3I, Chunk> chunkList = new Dictionary<Vector3I, Chunk>();
 
     public static Vector3I SIZE = new Vector3I(16,256,16);
     public Block[,,] grid;
@@ -20,9 +20,11 @@ public partial class Chunk
 
     public IGenerator generator;
 
+    static ConcurrentBag<long> times = new ConcurrentBag<long>();
+
     public void Prepare() {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
         CreateVoxelGrid();
-        chunkList.TryAdd(PositionToChunkCoord(position), this);
 
         generator = new NoiseLayer("Stone",30f);
         ((NoiseLayer) generator).AddLayer("Dirt");
@@ -39,10 +41,20 @@ public partial class Chunk
         InitBlockSides();
         Update(false);
         UpdateSurroundingChunks();
+
+        watch.Stop();
+		var elapsedMs = watch.ElapsedMilliseconds;
+		times.Add(elapsedMs);
+
+        long total = 0;
+		foreach(long time in times) {
+			total += time;
+		}
+
+		if(times.Count > 0) GD.Print(total/times.Count);
     }
 
     public void Remove() {
-        chunkList.TryRemove(PositionToChunkCoord(position), out _);
         DeleteVoxelRenderer();
     }
 

@@ -13,7 +13,6 @@ public partial class VoxelWorld : Node3D
 	public int lazyDistance = 2;
 
 	private Vector3 CHUNK_SIZE = Vector3.Zero;
-	private ConcurrentDictionary<Vector3I, Chunk> chunks = new ConcurrentDictionary<Vector3I, Chunk>();
 	private List<Vector3I> loadedCoords = new List<Vector3I>();
 	private List<Vector3I> lazyCoords = new List<Vector3I>();
 
@@ -52,7 +51,7 @@ public partial class VoxelWorld : Node3D
 
 		if(suggestionThreadActive) return;
 		suggestionThreadActive = true;
-		suggestionChunks.AddRange(chunks.Values);
+		suggestionChunks.AddRange(Chunk.chunkList.Values);
 		VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.SUGGESTIONS, this).RequestFunctionCall(this, "ProcessChunkSuggestions");
 	}
 
@@ -104,11 +103,11 @@ public partial class VoxelWorld : Node3D
 
 	private void CreateNewChunks() {
 		foreach(Vector3I coord in loadedCoords) {
-			if(chunks.ContainsKey(coord)) continue;
+			if(Chunk.chunkList.ContainsKey(coord)) continue;
 			ThreadPool pool = VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.GENERATION,this);
 
 			if(pool.ThreadFree()) {
-				chunks.TryAdd(coord, null);
+				Chunk.chunkList.TryAdd(coord, null);
 				pool.RequestFunctionCall(this, "CreateChunk", new Godot.Collections.Array() {coord});
 			}
 		}
@@ -118,7 +117,7 @@ public partial class VoxelWorld : Node3D
 		Chunk chunk = new Chunk();
 		chunk.position = coord*Chunk.SIZE;
 		chunk.world = this;
-		chunks.AddOrUpdate(coord, chunk, (coord, nullChunk) => chunk);
+		Chunk.chunkList[coord] = chunk;
 		chunk.Prepare();
 	}
 
@@ -135,10 +134,10 @@ public partial class VoxelWorld : Node3D
 	}
 
 	private void DeleteOldChunks() {
-		foreach(Vector3I coord in chunks.Keys) {
+		foreach(Vector3I coord in Chunk.chunkList.Keys) {
 			if(lazyCoords.Contains(coord)) continue;
-			Chunk chunk = chunks[coord];
-			chunks.TryRemove(coord, out _);
+			Chunk chunk = Chunk.chunkList[coord];
+			Chunk.chunkList.Remove(coord);
 
 			if(chunk == null) continue;
 			chunk.Remove();

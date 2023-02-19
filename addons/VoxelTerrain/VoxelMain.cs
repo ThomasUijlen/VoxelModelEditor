@@ -9,7 +9,7 @@ public class VoxelMain
 		GENERATION = 10,
 		SUGGESTIONS = 5,
 		RENDERING = 1,
-		RENDERING_CLOSE = 1
+		RENDERING_CLOSE = 10
 	};
 
 	public static Dictionary<POOL_TYPE, ThreadPool> poolList = new Dictionary<POOL_TYPE, ThreadPool>();
