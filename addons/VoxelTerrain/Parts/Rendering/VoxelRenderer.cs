@@ -11,7 +11,6 @@ public partial class VoxelRenderer : Node3D
 		IDLE,
 		WAITING_FOR_UPDATE,
 		UPDATING,
-		WAIT_FOR_RENDER_PASS
 	}
 
 	private STATE activeState = STATE.DISABLED;
@@ -54,29 +53,17 @@ public partial class VoxelRenderer : Node3D
 		if(times.Count > 0) GD.Print(total/times.Count);
 	}
 
+	float timer = 0.0f;
 	public override void _Process(double delta) {
 		switch(activeState) {
 			case STATE.WAITING_FOR_UPDATE:
-				if(world.RenderUpdatePass()) {
+				timer += Convert.ToSingle(delta);
+				if(timer > 0.05f) {
+					timer = 0f;
 					activeState = STATE.UPDATING;
 					activeGrid = (Block[,,]) recentGrid.Clone();
 					VoxelMain.GetThreadPool(poolType, this).RequestFunctionCall(this, "UpdateMesh");
 					poolType = VoxelMain.POOL_TYPE.RENDERING_CLOSE;
-				}
-			break;
-
-			case STATE.WAIT_FOR_RENDER_PASS:
-				if(world.RenderUpdatePass()) {
-					activeState = changePending ? STATE.WAITING_FOR_UPDATE : STATE.IDLE;
-					changePending = false;
-					MeshInstance newMeshInstance = meshes.Dequeue();
-					MeshInstance oldMeshInstance = meshes.Dequeue();
-
-					RenderingServer.InstanceSetVisible(newMeshInstance.instance, true);
-					RenderingServer.InstanceSetVisible(oldMeshInstance.instance, false);
-
-					meshes.Enqueue(oldMeshInstance);
-					meshes.Enqueue(newMeshInstance);
 				}
 			break;
 		}
@@ -119,18 +106,22 @@ public partial class VoxelRenderer : Node3D
 		CollectQuads();
 
 		MeshInstance newMeshInstance = meshes.Dequeue();
+		MeshInstance oldMeshInstance = meshes.Dequeue();
 		
 		GenerateMesh(newMeshInstance);
 
-		MeshInstance oldMeshInstance = meshes.Dequeue();
 
-		meshes.Enqueue(newMeshInstance);
+		RenderingServer.InstanceSetVisible(newMeshInstance.instance, true);
+		RenderingServer.InstanceSetVisible(oldMeshInstance.instance, false);
+
 		meshes.Enqueue(oldMeshInstance);
+		meshes.Enqueue(newMeshInstance);
 
 		faceList.Clear();
 		quads.Clear();
 
-		activeState = STATE.WAIT_FOR_RENDER_PASS;
+		activeState = changePending ? STATE.WAITING_FOR_UPDATE : STATE.IDLE;
+		changePending = false;
 
 		watch.Stop();
 		var elapsedMs = watch.ElapsedMilliseconds;

@@ -26,7 +26,6 @@ public partial class VoxelWorld : Node3D
 
 	
 	public override void _Process(double delta) {
-		RendererUpdateTimer(Convert.ToSingle(delta));
 		ChunkUpdateTimer(Convert.ToSingle(delta));
 		SuggestionTimer(Convert.ToSingle(delta));
 	}
@@ -42,18 +41,8 @@ public partial class VoxelWorld : Node3D
 		VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.GENERATION, this).RequestFunctionCall(this, "ChunkCheck");
 	}
 
-	static float renderInterval = 0.05f;
-	float rendererUpdateTimer = 0.0f;
+
 	List<Chunk> suggestionChunks = new List<Chunk>();
-	private void RendererUpdateTimer(float delta) {
-		if(rendererUpdateTimer > renderInterval) rendererUpdateTimer -= renderInterval;
-		rendererUpdateTimer += delta;
-	}
-
-	public bool RenderUpdatePass() {
-		return rendererUpdateTimer > renderInterval;
-	}
-
 	float suggestionTimer = 0.0f;
 	bool suggestionThreadActive = false;
 	private void SuggestionTimer(float delta) {
