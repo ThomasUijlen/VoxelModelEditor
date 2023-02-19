@@ -157,12 +157,12 @@ public partial class VoxelRenderer : Node3D
 	}
 
 	private void CollectFace(Block block, SIDE side) {
+		if(!block.activeSides.HasFlag(side)) return;
+
 		BlockType blockType = block.blockType;
 		Vector3 direction = Block.SideToVector(side);
 
-		if(!block.activeSides.HasFlag(side)) return;
-
-		BlockTexture blockTexture = blockType.GetTexture(side);
+		BlockTexture blockTexture = blockType.textureTable[side];
 		if(!faceList.ContainsKey(blockTexture)) faceList.Add(blockTexture, new Dictionary<SIDE, List<Vector3>>());
 		Dictionary<SIDE, List<Vector3>> positionList = faceList[blockTexture];
 		if(!positionList.ContainsKey(side)) positionList.Add(side, new List<Vector3>());
@@ -172,24 +172,23 @@ public partial class VoxelRenderer : Node3D
 	private void CollectQuads() {
 		foreach(KeyValuePair<BlockTexture, Dictionary<SIDE, List<Vector3>>> blockTexturePair in faceList) {
 			foreach(KeyValuePair<SIDE, List<Vector3>> sidePositionPair in blockTexturePair.Value) {
-				List<Vector3> consumedFaces = new List<Vector3>();
 				Vector3[] scanDirections = scanTable[sidePositionPair.Key];
 
-				foreach(Vector3 position in sidePositionPair.Value) {
-					if(consumedFaces.Contains(position)) continue;
-					Vector3 currentPosition = position;
+				List<Vector3> remainingFaces = sidePositionPair.Value;
+				while(remainingFaces.Count > 0) {
+					Vector3 currentPosition = remainingFaces[0];
 
 					//Calculate the width and length of the quad
-					int quadLength = ScanDirection(currentPosition, 1, scanDirections[0], sidePositionPair.Value, consumedFaces);
+					int quadLength = ScanDirection(currentPosition, 1, scanDirections[0], remainingFaces);
 					int quadWidth = -1;
 					for(int i = 0; i < quadLength; i++) {
-						int width = ScanDirection(currentPosition + scanDirections[0]*i, 1, scanDirections[1], sidePositionPair.Value, consumedFaces);
+						int width = ScanDirection(currentPosition + scanDirections[0]*i, 1, scanDirections[1], remainingFaces);
 						if(quadWidth < 1 || width < quadWidth) quadWidth = width;
 						if(quadWidth == 1) break;
 					}
 
 					//Consume faces so they can't be used again
-					for(int y = 0; y < quadLength; y++) for(int x = 0; x < quadWidth; x++) consumedFaces.Add(currentPosition + scanDirections[0]*y + scanDirections[1]*x);
+					for(int y = 0; y < quadLength; y++) for(int x = 0; x < quadWidth; x++) remainingFaces.Remove(currentPosition + scanDirections[0]*y + scanDirections[1]*x);
 
 					//Add a quad to the list
 					Quad quad = new Quad();
@@ -207,9 +206,9 @@ public partial class VoxelRenderer : Node3D
 		}
 	}
 
-	private int ScanDirection(Vector3 position, int x, Vector3 axis, List<Vector3> faces, List<Vector3> consumedFaces) {
+	private int ScanDirection(Vector3 position, int x, Vector3 axis, List<Vector3> faces) {
 		Vector3 scanPosition = position + axis*x;
-		if(faces.Contains(scanPosition) && !consumedFaces.Contains(scanPosition)) return ScanDirection(position, x+1, axis, faces, consumedFaces);
+		if(faces.Contains(scanPosition)) return ScanDirection(position, x+1, axis, faces);
 		return x;
 	}
 

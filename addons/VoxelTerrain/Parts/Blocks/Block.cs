@@ -44,9 +44,7 @@ public class Block {
 		// else if(this.blockType != null && blockType == null) Interlocked.Decrement(ref chunk.drawnBlocks);
 
 		this.blockType = blockType;
-		UpdateSelf();
-		SetSurroundingBlocks();
-		if(updateChunk && chunk.automaticUpdating) UpdateChunks();	
+		if(updateChunk && chunk.automaticUpdating) UpdateAll();	
 	}
 
 	public void UpdateSelf() {
@@ -60,7 +58,7 @@ public class Block {
 		}
 	}
 
-	public void SetSurroundingBlocks() {
+	public void UpdateSurroundingBlocks() {
 		for(int i = 0; i < neighbours.Length; i++) {
 			SIDE side = neighbours[i];
 			Block block = Chunk.GetBlock(chunk, position+SideToVector(side));
@@ -74,7 +72,9 @@ public class Block {
 		}
 	}
 
-	private void UpdateChunks() {
+	private void UpdateAll() {
+		UpdateSelf();
+		UpdateSurroundingBlocks();
 		chunk?.Update();
 
 		for(int i = 0; i < neighbours.Length; i++) {
