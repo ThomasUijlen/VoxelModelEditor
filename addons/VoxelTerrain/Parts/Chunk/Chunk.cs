@@ -31,8 +31,8 @@ public partial class Chunk
         ((NoiseLayer) generator).AddLayer("Grass");
         generator.Generate(this);
 
-        generator = new NoiseCaves(1f);
-        generator.Generate(this);
+        // generator = new NoiseCaves(1f);
+        // generator.Generate(this);
 
         automaticUpdating = true;
         generating = false;
@@ -175,26 +175,21 @@ public partial class Chunk
         return SetBlock(position, blockType, priority);
     }
 
-    public static void BulkSet(List<Vector3> positions, BlockType blockType, int priority = -1) {
-        List<Chunk> affectedChunks = new List<Chunk>();
-
-        for(int i = 0; i < positions.Count; i++) {
-            Vector3 position = positions[i];
-            Chunk chunk = GetChunk(position);
-            if(chunk == null) continue;
-            Block block = GetBlock(chunk, position);
-            if(block == null) continue;
-            affectedChunks.Add(chunk);
-            block.SetBlockType(blockType, priority, false);
-        }
-
-        foreach(Chunk chunk in affectedChunks) {
-            chunk.Update();
-            chunk.UpdateSurroundingChunks(true);
-        }
+    public bool SetBlockLocal(Vector3 position, BlockType blockType, int priority = -1) {
+        Vector3I blockCoord = PositionToCoord(position);
+        if(blockCoord.X >= 0
+            && blockCoord.Y >= 0
+            && blockCoord.Z >= 0
+            && blockCoord.X < SIZE.X
+            && blockCoord.Y < SIZE.Y
+            && blockCoord.Z < SIZE.Z) {
+                grid[blockCoord.X, blockCoord.Y, blockCoord.Z].SetBlockType(blockType, priority);
+                return true;
+            }
+        return false;
     }
 
-    private Block GetBlockLocal(Vector3 position) {
+    public Block GetBlockLocal(Vector3 position) {
         Vector3I blockCoord = PositionToCoord(position);
         if(blockCoord.X >= 0
             && blockCoord.Y >= 0

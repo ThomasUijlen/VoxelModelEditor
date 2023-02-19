@@ -105,8 +105,12 @@ public partial class VoxelWorld : Node3D
 	private void CreateNewChunks() {
 		foreach(Vector3I coord in loadedCoords) {
 			if(chunks.ContainsKey(coord)) continue;
-			chunks.TryAdd(coord, null);
-			VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.GENERATION,this).RequestFunctionCall(this, "CreateChunk", new Godot.Collections.Array() {coord});
+			ThreadPool pool = VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.GENERATION,this);
+
+			if(pool.ThreadFree()) {
+				chunks.TryAdd(coord, null);
+				pool.RequestFunctionCall(this, "CreateChunk", new Godot.Collections.Array() {coord});
+			}
 		}
 	}
 

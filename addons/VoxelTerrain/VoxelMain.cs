@@ -6,10 +6,10 @@ namespace VoxelPlugin {
 public class VoxelMain
 {
 	public enum POOL_TYPE {
-		GENERATION,
-		SUGGESTIONS,
-		RENDERING,
-		RENDERING_CLOSE
+		GENERATION = 10,
+		SUGGESTIONS = 5,
+		RENDERING = 1,
+		RENDERING_CLOSE = 1
 	};
 
 	public static Dictionary<POOL_TYPE, ThreadPool> poolList = new Dictionary<POOL_TYPE, ThreadPool>();
@@ -17,6 +17,7 @@ public class VoxelMain
 	public static ThreadPool GetThreadPool(POOL_TYPE type, Node node) {
 		if(poolList.ContainsKey(type)) return poolList[type];
 		ThreadPool threadPool = new ThreadPool();
+		threadPool.THREAD_COUNT = (int) type;
 		node.GetTree().Root.AddChild(threadPool);
 		poolList.Add(type, threadPool);
 		return threadPool;
