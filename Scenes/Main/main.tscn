@@ -35,12 +35,12 @@ script = ExtResource("1_ljqy4")
 environment = SubResource("Environment_8cjpn")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(0.866025, -0.353554, 0.353554, 0.0508233, 0.76569, 0.641198, -0.497411, -0.537325, 0.681076, 0, 0, 0)
+transform = Transform3D(0.866025, -0.353554, 0.353554, 0.0508233, 0.76569, 0.641199, -0.497411, -0.537325, 0.681076, 0, 0, 0)
 shadow_enabled = true
 directional_shadow_max_distance = 400.0
 
 [node name="VoxelWorld" parent="." instance=ExtResource("2_toj0p")]
-renderDistance = 5
+renderDistance = 20
 lazyDistance = 4
 
 [node name="Camera" parent="." instance=ExtResource("3_oa4dd")]

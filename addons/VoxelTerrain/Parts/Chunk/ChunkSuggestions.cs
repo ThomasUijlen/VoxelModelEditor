@@ -10,11 +10,7 @@ public partial class Chunk
 
     public static void SuggestChange(Chunk chunk, Vector3 position, BlockType blockType, int priority = 0) {
         if(chunk != null) {
-            Chunk changedChunk = Chunk.GetChunk(position);
-            if(chunk == changedChunk) {
-                Chunk.SetBlock(position, blockType, priority);
-                return;
-            }
+            if(chunk.SetBlockLocal(position, blockType, priority)) return;
         }
 
         Vector3I chunkCoord = Chunk.PositionToChunkCoord(position);

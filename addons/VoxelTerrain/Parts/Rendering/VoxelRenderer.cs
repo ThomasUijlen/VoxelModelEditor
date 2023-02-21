@@ -26,8 +26,6 @@ public partial class VoxelRenderer : Node3D
 	private VoxelMain.POOL_TYPE poolType = VoxelMain.POOL_TYPE.RENDERING;
 	public VoxelWorld world;
 	public Chunk chunk;
-
-	static ConcurrentBag<long> times = new ConcurrentBag<long>();
 	
 	public override void _Ready() {
 		for(int i = 0; i < 2; i++) {
@@ -44,21 +42,20 @@ public partial class VoxelRenderer : Node3D
 			meshes.Enqueue(multiMeshInstance);
 			meshList.Add(multiMeshInstance);
 		}
-
-		long total = 0;
-		foreach(long time in times) {
-			total += time;
-		}
-
-		if(times.Count > 0) GD.Print(total/times.Count);
 	}
 
 	float timer = 0.0f;
 	public override void _Process(double delta) {
 		switch(activeState) {
 			case STATE.WAITING_FOR_UPDATE:
+				if(chunk == null) {
+					activeState = STATE.DISABLED;
+					return;
+				}
+				ProcessPriority = Mathf.RoundToInt(chunk.position.DistanceTo(world.playerPosition));
+
 				timer += Convert.ToSingle(delta);
-				if(timer > 0.1f) {
+				if(timer > 0.01f) {
 					ThreadPool pool = VoxelMain.GetThreadPool(poolType, this);
 					if(pool.ThreadFree()) {
 						timer = 0f;
@@ -80,11 +77,11 @@ public partial class VoxelRenderer : Node3D
 	public void Deactivate() {
 		activeState = STATE.DISABLED;
 
-		for(int i = 0; i < 2; i++) {
-			MeshInstance meshInstance = meshes.Dequeue();
-			RenderingServer.InstanceSetVisible(meshInstance.instance, false);
-			meshes.Enqueue(meshInstance);
-		}
+		// for(int i = 0; i < 2; i++) {
+		// 	MeshInstance meshInstance = meshes.Dequeue();
+		// 	RenderingServer.InstanceSetVisible(meshInstance.instance, false);
+		// 	meshes.Enqueue(meshInstance);
+		// }
 	}
 
 	bool changePending = false;
@@ -104,7 +101,6 @@ public partial class VoxelRenderer : Node3D
 	private List<Quad> quads = new List<Quad>();
 
 	public void UpdateMesh() {
-		var watch = System.Diagnostics.Stopwatch.StartNew();
 		CollectFaces(activeGrid);
 		CollectQuads();
 
@@ -124,10 +120,6 @@ public partial class VoxelRenderer : Node3D
 
 		activeState = changePending ? STATE.WAITING_FOR_UPDATE : STATE.IDLE;
 		changePending = false;
-
-		watch.Stop();
-		var elapsedMs = watch.ElapsedMilliseconds;
-		times.Add(elapsedMs);
 	}
 
 	private void CollectFaces(Block[,,] grid) {

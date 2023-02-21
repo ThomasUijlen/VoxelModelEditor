@@ -79,7 +79,7 @@ public partial class main : Sprite2D
 		}
 
 		if(Input.IsActionPressed("MouseMiddle")) {
-			Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*50f;
+			Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*30f;
 			int radius = 12;
 
 			for(int x = -radius; x < radius; x++) {
