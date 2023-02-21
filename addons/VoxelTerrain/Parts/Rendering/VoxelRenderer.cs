@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace VoxelPlugin {
 public partial class VoxelRenderer : Node3D
@@ -10,7 +11,6 @@ public partial class VoxelRenderer : Node3D
 		IDLE,
 		WAITING_FOR_UPDATE,
 		UPDATING,
-		WAIT_FOR_RENDER_PASS
 	}
 
 	private STATE activeState = STATE.DISABLED;
@@ -44,29 +44,26 @@ public partial class VoxelRenderer : Node3D
 		}
 	}
 
+	float timer = 0.0f;
 	public override void _Process(double delta) {
 		switch(activeState) {
 			case STATE.WAITING_FOR_UPDATE:
-				if(world.RenderUpdatePass()) {
-					activeState = STATE.UPDATING;
-					activeGrid = (Block[,,]) recentGrid.Clone();
-					VoxelMain.GetThreadPool(poolType, this).RequestFunctionCall(this, "UpdateMesh");
-					poolType = VoxelMain.POOL_TYPE.RENDERING_CLOSE;
+				if(chunk == null) {
+					activeState = STATE.DISABLED;
+					return;
 				}
-			break;
+				ProcessPriority = Mathf.RoundToInt(chunk.position.DistanceTo(world.playerPosition));
 
-			case STATE.WAIT_FOR_RENDER_PASS:
-				if(world.RenderUpdatePass()) {
-					activeState = changePending ? STATE.WAITING_FOR_UPDATE : STATE.IDLE;
-					changePending = false;
-					MeshInstance newMeshInstance = meshes.Dequeue();
-					MeshInstance oldMeshInstance = meshes.Dequeue();
-
-					RenderingServer.InstanceSetVisible(newMeshInstance.instance, true);
-					RenderingServer.InstanceSetVisible(oldMeshInstance.instance, false);
-
-					meshes.Enqueue(oldMeshInstance);
-					meshes.Enqueue(newMeshInstance);
+				timer += Convert.ToSingle(delta);
+				if(timer > 0.01f) {
+					ThreadPool pool = VoxelMain.GetThreadPool(poolType, this);
+					if(pool.ThreadFree()) {
+						timer = 0f;
+						activeState = STATE.UPDATING;
+						activeGrid = (Block[,,]) recentGrid.Clone();
+						pool.RequestFunctionCall(this, "UpdateMesh");
+						poolType = VoxelMain.POOL_TYPE.RENDERING_CLOSE;
+					}
 				}
 			break;
 		}
@@ -80,11 +77,11 @@ public partial class VoxelRenderer : Node3D
 	public void Deactivate() {
 		activeState = STATE.DISABLED;
 
-		for(int i = 0; i < 2; i++) {
-			MeshInstance meshInstance = meshes.Dequeue();
-			RenderingServer.InstanceSetVisible(meshInstance.instance, false);
-			meshes.Enqueue(meshInstance);
-		}
+		// for(int i = 0; i < 2; i++) {
+		// 	MeshInstance meshInstance = meshes.Dequeue();
+		// 	RenderingServer.InstanceSetVisible(meshInstance.instance, false);
+		// 	meshes.Enqueue(meshInstance);
+		// }
 	}
 
 	bool changePending = false;
@@ -108,18 +105,21 @@ public partial class VoxelRenderer : Node3D
 		CollectQuads();
 
 		MeshInstance newMeshInstance = meshes.Dequeue();
+		MeshInstance oldMeshInstance = meshes.Dequeue();
 		
 		GenerateMesh(newMeshInstance);
 
-		MeshInstance oldMeshInstance = meshes.Dequeue();
+		RenderingServer.InstanceSetVisible(newMeshInstance.instance, true);
+		RenderingServer.InstanceSetVisible(oldMeshInstance.instance, false);
 
-		meshes.Enqueue(newMeshInstance);
 		meshes.Enqueue(oldMeshInstance);
+		meshes.Enqueue(newMeshInstance);
 
 		faceList.Clear();
 		quads.Clear();
 
-		activeState = STATE.WAIT_FOR_RENDER_PASS;
+		activeState = changePending ? STATE.WAITING_FOR_UPDATE : STATE.IDLE;
+		changePending = false;
 	}
 
 	private void CollectFaces(Block[,,] grid) {
@@ -129,7 +129,7 @@ public partial class VoxelRenderer : Node3D
             for(int y = 0; y < size.Y; y++) {
                 for(int z = 0; z < size.Z; z++) {
 					Block block = grid[x,y,z];
-					if(block.blockType == null) continue;
+					if(block.blockType == null || !block.blockType.rendered) continue;
 					CollectFace(block, SIDE.TOP);
 					CollectFace(block, SIDE.BOTTOM);
 					CollectFace(block, SIDE.LEFT);
@@ -142,14 +142,12 @@ public partial class VoxelRenderer : Node3D
 	}
 
 	private void CollectFace(Block block, SIDE side) {
+		if(!block.activeSides.HasFlag(side)) return;
+
 		BlockType blockType = block.blockType;
-		if(!blockType.rendered) return;
 		Vector3 direction = Block.SideToVector(side);
 
-		BlockType neighbour = Chunk.GetBlockType(chunk, block.position + direction);
-		if(neighbour == null || (!neighbour.transparent && neighbour.rendered)) return;
-
-		BlockTexture blockTexture = blockType.GetTexture(side);
+		BlockTexture blockTexture = blockType.textureTable[side];
 		if(!faceList.ContainsKey(blockTexture)) faceList.Add(blockTexture, new Dictionary<SIDE, List<Vector3>>());
 		Dictionary<SIDE, List<Vector3>> positionList = faceList[blockTexture];
 		if(!positionList.ContainsKey(side)) positionList.Add(side, new List<Vector3>());
@@ -159,24 +157,23 @@ public partial class VoxelRenderer : Node3D
 	private void CollectQuads() {
 		foreach(KeyValuePair<BlockTexture, Dictionary<SIDE, List<Vector3>>> blockTexturePair in faceList) {
 			foreach(KeyValuePair<SIDE, List<Vector3>> sidePositionPair in blockTexturePair.Value) {
-				List<Vector3> consumedFaces = new List<Vector3>();
 				Vector3[] scanDirections = scanTable[sidePositionPair.Key];
 
-				foreach(Vector3 position in sidePositionPair.Value) {
-					if(consumedFaces.Contains(position)) continue;
-					Vector3 currentPosition = position;
+				List<Vector3> remainingFaces = sidePositionPair.Value;
+				while(remainingFaces.Count > 0) {
+					Vector3 currentPosition = remainingFaces[0];
 
 					//Calculate the width and length of the quad
-					int quadLength = ScanDirection(currentPosition, 1, scanDirections[0], sidePositionPair.Value, consumedFaces);
+					int quadLength = ScanDirection(currentPosition, 1, scanDirections[0], remainingFaces);
 					int quadWidth = -1;
 					for(int i = 0; i < quadLength; i++) {
-						int width = ScanDirection(currentPosition + scanDirections[0]*i, 1, scanDirections[1], sidePositionPair.Value, consumedFaces);
-						if(quadWidth < 1 || width < quadWidth) quadWidth = width;
+						int width = ScanDirection(currentPosition + scanDirections[0]*i, 1, scanDirections[1], remainingFaces);
+						if(quadWidth == -1 || width < quadWidth) quadWidth = width;
 						if(quadWidth == 1) break;
 					}
 
 					//Consume faces so they can't be used again
-					for(int y = 0; y < quadLength; y++) for(int x = 0; x < quadWidth; x++) consumedFaces.Add(currentPosition + scanDirections[0]*y + scanDirections[1]*x);
+					for(int y = 0; y < quadLength; y++) for(int x = 0; x < quadWidth; x++) remainingFaces.Remove(currentPosition + scanDirections[0]*y + scanDirections[1]*x);
 
 					//Add a quad to the list
 					Quad quad = new Quad();
@@ -194,15 +191,14 @@ public partial class VoxelRenderer : Node3D
 		}
 	}
 
-	private int ScanDirection(Vector3 position, int x, Vector3 axis, List<Vector3> faces, List<Vector3> consumedFaces) {
+	private int ScanDirection(Vector3 position, int x, Vector3 axis, List<Vector3> faces) {
 		Vector3 scanPosition = position + axis*x;
-		if(faces.Contains(scanPosition) && !consumedFaces.Contains(scanPosition)) return ScanDirection(position, x+1, axis, faces, consumedFaces);
+		if(faces.Contains(scanPosition)) return ScanDirection(position, x+1, axis, faces);
 		return x;
 	}
 
 	private void GenerateMesh(MeshInstance meshInstance) {
 		if(quads.Count >= quadCount) {
-			//RenderingServer.InstanceSetVisible(meshInstance.instance, true);
 			while(quads.Count >= quadCount) quadCount += 250;
 		}
 

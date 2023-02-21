@@ -78,27 +78,9 @@ public partial class main : Sprite2D
 			}
 		}
 
-		// if(Input.IsActionPressed("MouseMiddle")) {
-		// 	Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*50f;
-		// 	int radius = 12;
-
-		// 	for(int x = -radius; x < radius; x++) {
-		// 		for(int y = -radius; y < radius; y++) {
-		// 			for(int z = -radius; z < radius; z++) {
-		// 				Vector3 pos = new Vector3(x,y,z);
-		// 				float d = pos.DistanceTo(Vector3.Zero);
-		// 				if(d > radius) continue;
-		// 				Chunk.SetBlock(startCoord+pos, BlockLibrary.GetBlockType("Air"));
-		// 			}
-		// 		}
-		// 	}
-		// }
-
 		if(Input.IsActionPressed("MouseMiddle")) {
-			Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*50f;
+			Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*30f;
 			int radius = 12;
-
-			List<Vector3> positions = new List<Vector3>();
 
 			for(int x = -radius; x < radius; x++) {
 				for(int y = -radius; y < radius; y++) {
@@ -106,13 +88,31 @@ public partial class main : Sprite2D
 						Vector3 pos = new Vector3(x,y,z);
 						float d = pos.DistanceTo(Vector3.Zero);
 						if(d > radius) continue;
-						positions.Add(startCoord+pos);
+						Chunk.SetBlock(startCoord+pos, BlockLibrary.GetBlockType("Air"));
 					}
 				}
 			}
-
-			Chunk.BulkSet(positions, BlockLibrary.GetBlockType("Air"));
 		}
+
+		// if(Input.IsActionPressed("MouseMiddle")) {
+		// 	Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*50f;
+		// 	int radius = 12;
+
+		// 	List<Vector3> positions = new List<Vector3>();
+
+		// 	for(int x = -radius; x < radius; x++) {
+		// 		for(int y = -radius; y < radius; y++) {
+		// 			for(int z = -radius; z < radius; z++) {
+		// 				Vector3 pos = new Vector3(x,y,z);
+		// 				float d = pos.DistanceTo(Vector3.Zero);
+		// 				if(d > radius) continue;
+		// 				positions.Add(startCoord+pos);
+		// 			}
+		// 		}
+		// 	}
+
+		// 	Chunk.BulkSet(positions, BlockLibrary.GetBlockType("Air"));
+		// }
 
 		time += Convert.ToSingle(delta);
 		if(time < 5f) return;

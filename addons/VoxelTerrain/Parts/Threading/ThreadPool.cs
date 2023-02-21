@@ -1,18 +1,20 @@
 using Godot;
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace VoxelPlugin {
 public partial class ThreadPool : Node
 {
-    private const int THREAD_COUNT = 5;
-    private PoolThread[] threadPool = new PoolThread[THREAD_COUNT];
-    private List<FunctionRequest> functionQueue = new List<FunctionRequest>(1000);
+    public int THREAD_COUNT = 5;
+    private PoolThread[] threadPool;
+    private ConcurrentQueue<FunctionRequest> functionQueue = new ConcurrentQueue<FunctionRequest>();
 
     private bool poolActive = true;
 
     public override void _Ready()
     {
+        threadPool = new PoolThread[THREAD_COUNT];
+
         for(int i = 0; i < threadPool.Length; i++) {
             threadPool[i] = new PoolThread();
             PoolThread poolThread = threadPool[i];
@@ -39,10 +41,25 @@ public partial class ThreadPool : Node
             }
             
             if(!poolThread.active) {
-                poolThread.CallFunction(functionQueue[0]);
-                functionQueue.RemoveAt(0);
+                FunctionRequest functionRequest = null;
+                if(functionQueue.TryDequeue(out functionRequest)) poolThread.CallFunction(functionRequest);
             }
         }
+    }
+
+    public bool ThreadFree() {
+        return GetFreeThreads() > functionQueue.Count;
+    }
+
+    public int GetFreeThreads() {
+        int freeThreads = 0;
+        for(int i = 0; i < threadPool.Length; i++) {
+            if(!threadPool[i].active) freeThreads += 1;
+        }
+
+        freeThreads -= functionQueue.Count;
+
+        return freeThreads;
     }
 
     public bool ThreadsActive() {
@@ -55,19 +72,15 @@ public partial class ThreadPool : Node
     public FunctionRequest RequestFunctionCall(Node node, string functionName) {
         FunctionRequest functionRequest = new FunctionRequest(node, functionName);
         functionRequest.pool = this;
-        functionQueue.Add(functionRequest);
+        functionQueue.Enqueue(functionRequest);
         return functionRequest;
     }
 
     public FunctionRequest RequestFunctionCall(Node node, string functionName, Godot.Collections.Array parameters) {
         FunctionRequest functionRequest = new FunctionRequest(node, functionName, parameters);
         functionRequest.pool = this;
-        functionQueue.Add(functionRequest);
+        functionQueue.Enqueue(functionRequest);
         return functionRequest;
-    }
-
-    public void CancelRequest(FunctionRequest request) {
-        if(functionQueue.Contains(request)) functionQueue.Remove(request);
     }
 
     private void ThreadFunction(int i) {

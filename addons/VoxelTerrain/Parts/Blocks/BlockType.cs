@@ -6,19 +6,31 @@ using System.Linq;
 namespace VoxelPlugin {
 
 public partial class BlockType : Resource {
-	public Dictionary<SIDE, BlockTexture> textures = new Dictionary<SIDE, BlockTexture>();
+	private Dictionary<SIDE, BlockTexture> textures = new Dictionary<SIDE, BlockTexture>();
+	public Dictionary<SIDE, BlockTexture> textureTable = new Dictionary<SIDE, BlockTexture>() {
+		{SIDE.TOP, null},
+		{SIDE.BOTTOM, null},
+		{SIDE.FRONT, null},
+		{SIDE.BACK, null},
+		{SIDE.LEFT, null},
+		{SIDE.RIGHT, null}
+	};
 	public Color modulate;
 	public bool rendered = true;
 	public bool transparent = false;
 
 	public BlockType(Color modulate, int size, bool transparent = false) {
 		textures.Add(SIDE.DEFAULT, new BlockTexture(this, size));
+		CreateTextureTable();
+		
 		this.modulate = modulate;
 		this.transparent = transparent;
 	}
 
 	public BlockType(Image defaultTexture, Color modulate, bool transparent = false) {
 		textures.Add(SIDE.DEFAULT, new BlockTexture(this, defaultTexture));
+		CreateTextureTable();
+
 		this.modulate = modulate;
 		this.transparent = transparent;
 	}
@@ -28,13 +40,19 @@ public partial class BlockType : Resource {
 			this.textures.Add(keyValuePair.Key, new BlockTexture(this, keyValuePair.Value));
 		}
 		
+		CreateTextureTable();
 		this.modulate = modulate;
 		this.transparent = transparent;
 	}
 
-	public BlockTexture GetTexture(SIDE side) {
-		if(textures.ContainsKey(side)) return textures[side];
-		return textures[SIDE.DEFAULT];
+	private void CreateTextureTable() {
+		foreach(SIDE side in textureTable.Keys) {
+			if(textures.Keys.Contains(side)) {
+				textureTable[side] = textures[side];
+			} else {
+				textureTable[side] = textures[SIDE.DEFAULT];
+			}
+		}
 	}
 
 	public List<BlockTexture> GetAllTextures() {

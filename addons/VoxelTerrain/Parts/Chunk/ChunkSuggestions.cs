@@ -10,11 +10,7 @@ public partial class Chunk
 
     public static void SuggestChange(Chunk chunk, Vector3 position, BlockType blockType, int priority = 0) {
         if(chunk != null) {
-            Chunk changedChunk = Chunk.GetChunk(position);
-            if(chunk == changedChunk) {
-                Chunk.SetBlock(position, blockType, priority);
-                return;
-            }
+            if(chunk.SetBlockLocal(position, blockType, priority)) return;
         }
 
         Vector3I chunkCoord = Chunk.PositionToChunkCoord(position);
@@ -34,7 +30,7 @@ public partial class Chunk
 
         automaticUpdating = false;
 
-        int tries = 10000;
+        int tries = Chunk.SIZE.X*Chunk.SIZE.Y*Chunk.SIZE.Z;
         while(suggestionLib.suggestions.Count > 0 && tries > 0) {
             tries -= 1;
             
@@ -45,6 +41,7 @@ public partial class Chunk
         }
 
         automaticUpdating = true;
+        InitBlockSides();
         Update(false);
         UpdateSurroundingChunks();
     }
