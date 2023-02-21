@@ -25,15 +25,19 @@ public class NoiseLayer : IGenerator
     }
 
 	public void Generate(Chunk chunk) {
-        for(int x = 0; x < Chunk.SIZE.X; x++) {
-            for(int y = 0; y < Chunk.SIZE.Y; y++) {
+        int airLayers = 0;
+
+        for(int y = 0; y < Chunk.SIZE.Y; y++) {
+            bool airLayer = true;
+            for(int x = 0; x < Chunk.SIZE.X; x++) {
                 for(int z = 0; z < Chunk.SIZE.Z; z++) {
-                    Block block = chunk.grid[x,y,z];
+                    Block block = chunk.grid[y,x,z];
 
                     float n = noise.GetNoise3Dv(block.position * scale)*noiseWeight + startHeight/noiseWeight;
                     n -= block.position.Y * heightModifier;
 
                     if(n > 0.0f) {
+                        airLayer = false;
                         for(int layer = 0; layer < layers.Count; layer++) {
                             Vector3I pos = new Vector3I(0,layer,0);
                             Chunk.SuggestChange(chunk, block.position+pos, BlockLibrary.GetBlockType(layers[layer]), 0);
@@ -41,6 +45,9 @@ public class NoiseLayer : IGenerator
                     }
                 }
             }
+
+            if(airLayer) airLayers++;
+            if(airLayers > 2) return;
         }
     }
 }

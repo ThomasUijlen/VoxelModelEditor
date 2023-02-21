@@ -123,12 +123,12 @@ public partial class VoxelRenderer : Node3D
 	}
 
 	private void CollectFaces(Block[,,] grid) {
-		Vector3I size = new Vector3I(grid.GetLength(0), grid.GetLength(1), grid.GetLength(2));
+		Vector3I size = new Vector3I(grid.GetLength(1), grid.GetLength(0), grid.GetLength(2));
 
-		for(int x = 0; x < size.X; x++) {
-            for(int y = 0; y < size.Y; y++) {
+		for(int y = 0; y < size.Y; y++) {
+            for(int x = 0; x < size.X; x++) {
                 for(int z = 0; z < size.Z; z++) {
-					Block block = grid[x,y,z];
+					Block block = grid[y,x,z];
 					if(block.blockType == null || !block.blockType.rendered) continue;
 					CollectFace(block, SIDE.TOP);
 					CollectFace(block, SIDE.BOTTOM);
