@@ -48,6 +48,12 @@ public partial class VoxelRenderer : Node3D
 	public override void _Process(double delta) {
 		switch(activeState) {
 			case STATE.WAITING_FOR_UPDATE:
+				if(chunk == null) {
+					activeState = STATE.DISABLED;
+					return;
+				}
+				ProcessPriority = Mathf.RoundToInt(chunk.position.DistanceTo(world.playerPosition));
+
 				timer += Convert.ToSingle(delta);
 				if(timer > 0.01f) {
 					ThreadPool pool = VoxelMain.GetThreadPool(poolType, this);
@@ -71,11 +77,11 @@ public partial class VoxelRenderer : Node3D
 	public void Deactivate() {
 		activeState = STATE.DISABLED;
 
-		for(int i = 0; i < 2; i++) {
-			MeshInstance meshInstance = meshes.Dequeue();
-			RenderingServer.InstanceSetVisible(meshInstance.instance, false);
-			meshes.Enqueue(meshInstance);
-		}
+		// for(int i = 0; i < 2; i++) {
+		// 	MeshInstance meshInstance = meshes.Dequeue();
+		// 	RenderingServer.InstanceSetVisible(meshInstance.instance, false);
+		// 	meshes.Enqueue(meshInstance);
+		// }
 	}
 
 	bool changePending = false;

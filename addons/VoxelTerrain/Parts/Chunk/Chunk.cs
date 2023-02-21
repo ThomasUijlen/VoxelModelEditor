@@ -22,9 +22,15 @@ public partial class Chunk
 
     static ConcurrentBag<long> times = new ConcurrentBag<long>();
 
+    public Chunk(Vector3 position, VoxelWorld world) {
+        this.position = position;
+        this.world = world;
+
+        CreateVoxelGrid();
+    }
+
     public void Prepare() {
         var watch = System.Diagnostics.Stopwatch.StartNew();
-        CreateVoxelGrid();
 
         generator = new NoiseLayer("Stone",30f);
         ((NoiseLayer) generator).AddLayer("Dirt");
@@ -98,6 +104,21 @@ public partial class Chunk
         }
     }
 
+    private void UpdateEdges() {
+        for(int x = 0; x < SIZE.X; x++) {
+            for(int y = 0; y < SIZE.Y; y++) {
+                for(int z = 0; z < SIZE.Z; z++) {
+                    if(x == 0 || y == 0 || z == 0
+                    || x == SIZE.X-1 || y == SIZE.Y-1 || z == SIZE.Z-1) {
+                        Block block = grid[x,y,z];
+                        // block.UpdateSurroundingBlocks();
+                        block.UpdateSelf();
+                    }
+                }
+            }
+        }
+    }
+
     public void Update(bool fromBlock = true) {
         if(!automaticUpdating) return;
         CreateVoxelRenderer();
@@ -115,7 +136,9 @@ public partial class Chunk
 
     public void UpdateSurroundingChunks(bool fromBlock = false) {
         for(int i = 0; i < neighbours.Length; i++) {
-			Chunk.GetChunk(position + neighbours[i]*SIZE)?.Update(fromBlock);
+            Chunk chunk = Chunk.GetChunk(position + neighbours[i]*SIZE);
+            chunk?.UpdateEdges();
+			chunk?.Update(fromBlock);
 		}
     }
 
@@ -151,7 +174,7 @@ public partial class Chunk
         
         if(chunkList.ContainsKey(chunkCoord)) {
             Chunk chunk = chunkList[chunkCoord];
-            return chunk.GetBlockLocal(position); 
+            if(chunk != null && !chunk.generating) return chunk.GetBlockLocal(position);
         }
         
         return null;

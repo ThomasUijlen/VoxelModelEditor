@@ -18,6 +18,8 @@ public partial class VoxelWorld : Node3D
 
 	private bool chunkThreadActive = false;
 
+	public Vector3 playerPosition = Vector3.Zero;
+
 	public override void _Ready() {
 		CHUNK_SIZE = Chunk.SIZE;
 		ProcessPriority = -10;
@@ -27,13 +29,14 @@ public partial class VoxelWorld : Node3D
 	public override void _Process(double delta) {
 		ChunkUpdateTimer(Convert.ToSingle(delta));
 		SuggestionTimer(Convert.ToSingle(delta));
+		playerPosition = GetViewport().GetCamera3D().GlobalPosition;
 	}
 
 	float chunkUpdateTimer = 0.0f;
 	private void ChunkUpdateTimer(float delta) {
 		chunkUpdateTimer -= delta;
 		if(chunkUpdateTimer > 0.0f) return;
-		chunkUpdateTimer = 1.0f;
+		chunkUpdateTimer = 0.1f;
 
 		if(chunkThreadActive) return;
 		chunkThreadActive = true;
@@ -102,21 +105,20 @@ public partial class VoxelWorld : Node3D
 	}
 
 	private void CreateNewChunks() {
-		foreach(Vector3I coord in loadedCoords) {
-			if(Chunk.chunkList.ContainsKey(coord)) continue;
-			ThreadPool pool = VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.GENERATION,this);
+		ThreadPool pool = VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.GENERATION,this);
+		int freeThreads = pool.GetFreeThreads();
 
-			if(pool.ThreadFree()) {
-				Chunk.chunkList.TryAdd(coord, null);
-				pool.RequestFunctionCall(this, "CreateChunk", new Godot.Collections.Array() {coord});
-			}
+		foreach(Vector3I coord in loadedCoords) {
+			if(freeThreads <= 0) break;
+			if(Chunk.chunkList.ContainsKey(coord)) continue;
+			Chunk.chunkList.TryAdd(coord, null);
+			pool.RequestFunctionCall(this, "CreateChunk", new Godot.Collections.Array() {coord});
+			freeThreads -= 1;
 		}
 	}
 
 	public void CreateChunk(Vector3I coord) {
-		Chunk chunk = new Chunk();
-		chunk.position = coord*Chunk.SIZE;
-		chunk.world = this;
+		Chunk chunk = new Chunk(coord*Chunk.SIZE, this);
 		Chunk.chunkList[coord] = chunk;
 		chunk.Prepare();
 	}

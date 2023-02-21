@@ -48,14 +48,18 @@ public partial class ThreadPool : Node
     }
 
     public bool ThreadFree() {
+        return GetFreeThreads() > functionQueue.Count;
+    }
+
+    public int GetFreeThreads() {
         int freeThreads = 0;
         for(int i = 0; i < threadPool.Length; i++) {
             if(!threadPool[i].active) freeThreads += 1;
         }
 
-        if(freeThreads > functionQueue.Count) return true;
+        freeThreads -= functionQueue.Count;
 
-        return false;
+        return freeThreads;
     }
 
     public bool ThreadsActive() {
