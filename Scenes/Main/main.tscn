@@ -9,11 +9,12 @@ script/source = "extends Node3D
 
 
 # Called when the node enters the scene tree for the first time.
-func _ready():
-	var sum : Summator = Summator.new()
-	sum.add(10)
-	sum.add(20)
-	print(sum.get_total())
+#func _ready():
+#	var sum : VoxelWorld = VoxelWorld.new()
+#	add_child(sum)
+#
+#	var mesh = load(\"res://addons/VoxelTerrain/Parts/Blocks/Mesh/VoxelFace.tres\")
+#	sum.prepare(mesh)
 "
 
 [sub_resource type="PhysicalSkyMaterial" id="PhysicalSkyMaterial_5kjyb"]

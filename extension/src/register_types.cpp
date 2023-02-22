@@ -1,5 +1,6 @@
 #include "register_types.h"
 #include "summator.h"
+#include "VoxelWorld.h"
 #include <gdextension_interface.h>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -13,6 +14,7 @@ void initialize_summator_types(ModuleInitializationLevel p_level)
 		return;
 	}
 	ClassDB::register_class<Summator>();
+	ClassDB::register_class<VoxelWorld>();
 }
 
 void uninitialize_summator_types(ModuleInitializationLevel p_level) {

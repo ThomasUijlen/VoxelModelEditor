@@ -18,14 +18,14 @@ sources = Glob("extension/src/*.cpp")
 
 if env["platform"] == "macos":
     library = env.SharedLibrary(
-        "game/bin/summator/libgdsummator.{}.{}.framework/libgdsummator.{}.{}".format(
+        "addons/VoxelTerrain/GDExtension/bin/voxellib.{}.{}.framework/voxellib.{}.{}".format(
             env["platform"], env["target"], env["platform"], env["target"]
         ),
         source=sources,
     )
 else:
     library = env.SharedLibrary(
-        "game/bin/summator/libgdsummator{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+        "addons/VoxelTerrain/GDExtension/bin/voxellib{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
         source=sources,
     )
 

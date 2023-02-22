@@ -2,17 +2,18 @@ using Godot;
 using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace VoxelPlugin {
 	[Flags]
-	public enum SIDE {
-		DEFAULT = 1,
-		TOP = 2,
-		BOTTOM = 4,
-		LEFT = 8,
-		RIGHT = 16,
-		FRONT = 32,
-		BACK = 64
+	public enum SIDE : byte {
+		DEFAULT = 1 << 0,
+		TOP = 1 << 1,
+		BOTTOM = 1 << 2,
+		LEFT = 1 << 3,
+		RIGHT = 1 << 4,
+		FRONT = 1 << 5,
+		BACK = 1 << 6
 	};
 
 public class Block {
@@ -26,7 +27,7 @@ public class Block {
 		SIDE.BACK
 	};
 
-	public SIDE activeSides = 0;
+	public byte activeSides = 0;
 
 	public Vector3 position;
 	public BlockType blockType;
@@ -122,16 +123,16 @@ public class Block {
 	}
 
 	public void AddSide(SIDE side) {
-		activeSides |= side;
+		activeSides |= ((byte) side);
 	}
 
 	public void RemoveSide(SIDE side) {
-		activeSides &= ~side;
+		activeSides = (byte) (activeSides & ~((byte) side));
 	}
 
 	public IEnumerable<SIDE> GetActiveSides() {
 		foreach (SIDE value in Enum.GetValues(activeSides.GetType()))
-			if (activeSides.HasFlag(value))
+			if ((activeSides & ((byte) value)) != 0)
 				yield return value;
 	}
 }

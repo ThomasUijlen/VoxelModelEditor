@@ -47,7 +47,7 @@ public class NoiseLayer : IGenerator
             }
 
             if(airLayer) airLayers++;
-            if(airLayers > 2) return;
+            if(airLayers > 3) return;
         }
     }
 }

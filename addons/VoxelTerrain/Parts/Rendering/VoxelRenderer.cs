@@ -142,7 +142,8 @@ public partial class VoxelRenderer : Node3D
 	}
 
 	private void CollectFace(Block block, SIDE side) {
-		if(!block.activeSides.HasFlag(side)) return;
+		if((block.activeSides & ((byte) side)) == 0) return;
+		// (activeSides & ((byte) value)) != 0
 
 		BlockType blockType = block.blockType;
 		Vector3 direction = Block.SideToVector(side);
