@@ -53,7 +53,7 @@ public class Block {
 		if(!blockType.rendered) return;
 		for(int i = 0; i < neighbours.Length; i++) {
 			SIDE side = neighbours[i];
-			if(HasToRender(blockType, Chunk.GetBlockType(chunk, position+SideToVector(side)*chunk.scale))) {
+			if(HasToRender(blockType, Chunk.GetBlockType(chunk, position+SideToVector(side)))) {
 				AddSide(side);
 			} else {
 				RemoveSide(side);
@@ -64,7 +64,7 @@ public class Block {
 	public void UpdateSurroundingBlocks() {
 		for(int i = 0; i < neighbours.Length; i++) {
 			SIDE side = neighbours[i];
-			Block block = Chunk.GetBlock(chunk, position+SideToVector(side)*chunk.scale);
+			Block block = Chunk.GetBlock(chunk, position+SideToVector(side));
 			if(block == null || !block.blockType.rendered) continue;
 
 			if(HasToRender(block.blockType, blockType)) {

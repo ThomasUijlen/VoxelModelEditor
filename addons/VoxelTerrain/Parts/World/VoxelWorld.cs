@@ -120,7 +120,7 @@ public partial class VoxelWorld : Node3D
 		Vector3 flatChunkPos = new Vector3(chunkPosition.X, 0, chunkPosition.Z);
 		Vector3 flatPlayerPos = new Vector3(playerPosition.X, 0, playerPosition.Z);
 
-		Chunk chunk = new Chunk(chunkPosition, this, GetSize(flatChunkPos.DistanceTo(flatPlayerPos)));
+		Chunk chunk = new Chunk(chunkPosition, this);
 		Chunk.chunkList[coord] = chunk;
 		chunk.Prepare();
 	}
@@ -146,13 +146,6 @@ public partial class VoxelWorld : Node3D
 			if(chunk == null) continue;
 			chunk.Remove();
 		}
-	}
-
-	private int GetSize(float distance) {
-		if(distance < 100) return 1;
-		if(distance < 300) return 2;
-		if(distance < 400) return 4;
-		return Chunk.SIZE.X;
 	}
 }
 }

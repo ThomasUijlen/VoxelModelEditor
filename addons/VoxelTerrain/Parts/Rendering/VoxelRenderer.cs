@@ -126,11 +126,8 @@ public partial class VoxelRenderer : Node3D
 		Vector3I size = new Vector3I(grid.GetLength(1), grid.GetLength(0), grid.GetLength(2));
 
 		for(int y = 0; y < Chunk.SIZE.Y; y++) {
-            if(y % chunk.scale != 0) continue;
             for(int x = 0; x < Chunk.SIZE.X; x++) {
-                if(x % chunk.scale != 0) continue;
                 for(int z = 0; z < Chunk.SIZE.Z; z++) {
-                    if(z % chunk.scale != 0) continue;
 					Block block = grid[y,x,z];
 					if(block.blockType == null || !block.blockType.rendered) continue;
 					CollectFace(block, SIDE.TOP);
@@ -149,7 +146,7 @@ public partial class VoxelRenderer : Node3D
 		// (activeSides & ((byte) value)) != 0
 
 		BlockType blockType = block.blockType;
-		Vector3 direction = Block.SideToVector(side)*chunk.scale;
+		Vector3 direction = Block.SideToVector(side);
 
 		BlockTexture blockTexture = blockType.textureTable[side];
 		if(!faceList.ContainsKey(blockTexture)) faceList.Add(blockTexture, new Dictionary<SIDE, List<Vector3>>());
@@ -217,7 +214,7 @@ public partial class VoxelRenderer : Node3D
 		for(int i = 0; i < quads.Count; i ++) {
 			Quad quad = quads[i];
 			Transform3D transform = new Transform3D(basisTable[quad.quadIndex], Vector3.Zero);
-			transform = transform.Scaled(quad.scale*chunk.scale);
+			transform = transform.Scaled(quad.scale);
 			transform.Origin += quad.position + quad.scale*0.5f;
 
 			Vector2 UV2 = UVFlipTable[quad.quadIndex] ? quad.scale2D : new Vector2(quad.scale2D.Y, quad.scale2D.X);

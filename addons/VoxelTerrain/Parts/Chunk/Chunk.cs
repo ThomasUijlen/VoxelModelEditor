@@ -22,12 +22,9 @@ public partial class Chunk
 
     static ConcurrentBag<long> times = new ConcurrentBag<long>();
 
-    public int scale = 1;
-
-    public Chunk(Vector3 position, VoxelWorld world, int scale) {
+    public Chunk(Vector3 position, VoxelWorld world) {
         this.position = position;
         this.world = world;
-        this.scale = scale;
 
         CreateVoxelGrid();
     }
@@ -87,11 +84,8 @@ public partial class Chunk
         BlockType air = BlockLibrary.GetBlockType("Air");
 
         for(int y = 0; y < SIZE.Y; y++) {
-            if(y % scale != 0) continue;
             for(int x = 0; x < SIZE.X; x++) {
-                if(x % scale != 0) continue;
                 for(int z = 0; z < SIZE.Z; z++) {
-                    if(z % scale != 0) continue;
                     Block block = new Block(this);
                     block.position = new Vector3(x,y,z) + position;
                     block.SetBlockType(air);
@@ -103,11 +97,8 @@ public partial class Chunk
 
     private void InitBlockSides() {
         for(int y = 0; y < SIZE.Y; y++) {
-            if(y % scale != 0) continue;
             for(int x = 0; x < SIZE.X; x++) {
-                if(x % scale != 0) continue;
                 for(int z = 0; z < SIZE.Z; z++) {
-                    if(z % scale != 0) continue;
                     Block block = grid[y,x,z];
                     
                     if(x == 0 || y == 0 || z == 0
@@ -120,11 +111,8 @@ public partial class Chunk
 
     private void UpdateEdges() {
         for(int y = 0; y < SIZE.Y; y++) {
-            if(y % scale != 0) continue;
             for(int x = 0; x < SIZE.X; x++) {
-                if(x % scale != 0) continue;
                 for(int z = 0; z < SIZE.Z; z++) {
-                    if(z % scale != 0) continue;
                     if(x == 0 || y == 0 || z == 0
                     || x == SIZE.X-1 || y == SIZE.Y-1 || z == SIZE.Z-1) {
                         Block block = grid[y,x,z];
@@ -234,12 +222,7 @@ public partial class Chunk
             && blockCoord.Z >= 0
             && blockCoord.X < SIZE.X
             && blockCoord.Y < SIZE.Y
-            && blockCoord.Z < SIZE.Z
-            && !(
-                blockCoord.Y % scale != 0 ||
-                blockCoord.X % scale != 0 ||
-                blockCoord.Z % scale != 0
-            )) {
+            && blockCoord.Z < SIZE.Z) {
                 grid[blockCoord.Y, blockCoord.X, blockCoord.Z].SetBlockType(blockType, priority);
                 return true;
             }
@@ -253,12 +236,7 @@ public partial class Chunk
             && blockCoord.Z >= 0
             && blockCoord.X < SIZE.X
             && blockCoord.Y < SIZE.Y
-            && blockCoord.Z < SIZE.Z
-            && !(
-                blockCoord.Y % scale != 0 ||
-                blockCoord.X % scale != 0 ||
-                blockCoord.Z % scale != 0
-            )) return grid[blockCoord.Y, blockCoord.X, blockCoord.Z];
+            && blockCoord.Z < SIZE.Z) return grid[blockCoord.Y, blockCoord.X, blockCoord.Z];
         return null;
     }
 
