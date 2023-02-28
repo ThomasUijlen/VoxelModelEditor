@@ -32,6 +32,9 @@ ssao_enabled = true
 ssao_intensity = 3.0
 sdfgi_enabled = true
 sdfgi_min_cell_size = 0.292969
+glow_enabled = true
+glow_bloom = 0.05
+glow_blend_mode = 1
 fog_light_color = Color(0.505882, 0.67451, 0.717647, 1)
 volumetric_fog_density = 0.03
 
@@ -54,7 +57,7 @@ shadow_enabled = true
 directional_shadow_max_distance = 400.0
 
 [node name="VoxelWorld" parent="." instance=ExtResource("2_toj0p")]
-renderDistance = 20
+renderDistance = 40
 lazyDistance = 4
 
 [node name="Camera" parent="." instance=ExtResource("3_oa4dd")]

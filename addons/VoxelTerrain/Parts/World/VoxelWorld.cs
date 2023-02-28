@@ -12,7 +12,6 @@ public partial class VoxelWorld : Node3D
 	[Export]
 	public int lazyDistance = 2;
 
-	private Vector3 CHUNK_SIZE = Vector3.Zero;
 	private List<Vector3I> loadedCoords = new List<Vector3I>();
 	private List<Vector3I> lazyCoords = new List<Vector3I>();
 
@@ -21,7 +20,6 @@ public partial class VoxelWorld : Node3D
 	public Vector3 playerPosition = Vector3.Zero;
 
 	public override void _Ready() {
-		CHUNK_SIZE = Chunk.SIZE;
 		ProcessPriority = -10;
 	}
 
@@ -72,8 +70,7 @@ public partial class VoxelWorld : Node3D
 	}
 
 	private void UpdateCoordLists() {
-		Vector3 cameraPosition = GetViewport().GetCamera3D().GlobalPosition;
-		Vector3I cameraChunkCoord = Chunk.PositionToChunkCoord(cameraPosition);
+		Vector3I cameraChunkCoord = Chunk.PositionToChunkCoord(playerPosition);
 		cameraChunkCoord.Y = 0;
 
 		loadedCoords.Clear();
@@ -118,7 +115,12 @@ public partial class VoxelWorld : Node3D
 	}
 
 	public void CreateChunk(Vector3I coord) {
-		Chunk chunk = new Chunk(coord*Chunk.SIZE, this);
+		Vector3 chunkPosition = coord*Chunk.SIZE;
+
+		Vector3 flatChunkPos = new Vector3(chunkPosition.X, 0, chunkPosition.Z);
+		Vector3 flatPlayerPos = new Vector3(playerPosition.X, 0, playerPosition.Z);
+
+		Chunk chunk = new Chunk(chunkPosition, this, GetSize(flatChunkPos.DistanceTo(flatPlayerPos)));
 		Chunk.chunkList[coord] = chunk;
 		chunk.Prepare();
 	}
@@ -144,6 +146,13 @@ public partial class VoxelWorld : Node3D
 			if(chunk == null) continue;
 			chunk.Remove();
 		}
+	}
+
+	private int GetSize(float distance) {
+		if(distance < 100) return 1;
+		if(distance < 300) return 2;
+		if(distance < 400) return 4;
+		return Chunk.SIZE.X;
 	}
 }
 }

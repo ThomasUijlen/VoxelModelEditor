@@ -12,19 +12,19 @@ public partial class main : Sprite2D
 	public override void _Ready()
 	{
 		rng.Randomize();
-		stone = new BlockType(GD.Load<CompressedTexture2D>("res://Textures/Stone.tres").GetImage(), new Color(1,1,1));
+		stone = new BlockType(GD.Load<Texture2D>("res://Textures/TexturePack1/Stone.png").GetImage(), new Color(1,1,1));
 		log = new BlockType(
 			new Dictionary<SIDE, Image>() {
-				{SIDE.DEFAULT, GD.Load<CompressedTexture2D>("res://Textures/Logs.tres").GetImage()},
-				{SIDE.TOP, GD.Load<CompressedTexture2D>("res://Textures/LogsTop.tres").GetImage()},
-				{SIDE.BOTTOM, GD.Load<CompressedTexture2D>("res://Textures/LogsTop.tres").GetImage()}
+				{SIDE.DEFAULT, GD.Load<Texture2D>("res://Textures/TexturePack1/Stone.png").GetImage()},
+				{SIDE.TOP, GD.Load<Texture2D>("res://Textures/TexturePack1/Stone.png").GetImage()},
+				{SIDE.BOTTOM, GD.Load<Texture2D>("res://Textures/TexturePack1/Stone.png").GetImage()}
 				}, new Color(1,1,1));
-		leaves = new BlockType(GD.Load<CompressedTexture2D>("res://Textures/Leaves.tres").GetImage(), new Color(1,1,1), true);
+		leaves = new BlockType(GD.Load<Texture2D>("res://Textures/TexturePack1/Stone.png").GetImage(), new Color(1,1,1), true);
 
 		BlockLibrary.AddBlockType("Default", new BlockType(new Color(1,1,1), 16));
 		BlockLibrary.AddBlockType("Stone", stone);
-		BlockLibrary.AddBlockType("Dirt", new BlockType(GD.Load<CompressedTexture2D>("res://Textures/Dirt.tres").GetImage(), new Color(1,1,1)));
-		BlockLibrary.AddBlockType("Grass", new BlockType(GD.Load<CompressedTexture2D>("res://Textures/Grass.tres").GetImage(), new Color(1,1,1)));
+		BlockLibrary.AddBlockType("Dirt", new BlockType(GD.Load<Texture2D>("res://Textures/TexturePack1/Dirt.png").GetImage(), new Color(1,1,1)));
+		BlockLibrary.AddBlockType("Grass", new BlockType(GD.Load<Texture2D>("res://Textures/TexturePack1/GrassTop.png").GetImage(), new Color(0.39f,0.60f,0.11f)));
 		BlockLibrary.AddBlockType("Leaves", leaves);
 		BlockLibrary.AddBlockType("Log", log);
 
@@ -64,7 +64,7 @@ public partial class main : Sprite2D
 
 		if(Input.IsActionPressed("MouseRight")) {
 			Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*40f;
-			int radius = 8;
+			int radius = 1;
 
 			for(int x = -radius; x < radius; x++) {
 				for(int y = -radius; y < radius; y++) {

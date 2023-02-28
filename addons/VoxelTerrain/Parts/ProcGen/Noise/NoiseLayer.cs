@@ -29,9 +29,12 @@ public class NoiseLayer : IGenerator
 
         for(int y = 0; y < Chunk.SIZE.Y; y++) {
             bool airLayer = true;
+            if(y % chunk.scale != 0) continue;
             for(int x = 0; x < Chunk.SIZE.X; x++) {
+                if(x % chunk.scale != 0) continue;
                 for(int z = 0; z < Chunk.SIZE.Z; z++) {
-                    Block block = chunk.grid[y,x,z];
+                    if(z % chunk.scale != 0) continue;
+					Block block = chunk.grid[y,x,z];
 
                     float n = noise.GetNoise3Dv(block.position * scale)*noiseWeight + startHeight/noiseWeight;
                     n -= block.position.Y * heightModifier;

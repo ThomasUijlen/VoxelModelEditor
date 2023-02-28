@@ -40,6 +40,7 @@ public class Block {
 
 	public void SetBlockType(BlockType blockType, int priority = -1, bool updateChunk = true) {
 		if(priority > 0 && priority < this.priority) return;
+		if(this.blockType == blockType) return;
 
 		// if(this.blockType == null && blockType != null) Interlocked.Increment(ref chunk.drawnBlocks);
 		// else if(this.blockType != null && blockType == null) Interlocked.Decrement(ref chunk.drawnBlocks);
@@ -52,7 +53,7 @@ public class Block {
 		if(!blockType.rendered) return;
 		for(int i = 0; i < neighbours.Length; i++) {
 			SIDE side = neighbours[i];
-			if(HasToRender(blockType, Chunk.GetBlockType(chunk, position+SideToVector(side)))) {
+			if(HasToRender(blockType, Chunk.GetBlockType(chunk, position+SideToVector(side)*chunk.scale))) {
 				AddSide(side);
 			} else {
 				RemoveSide(side);
@@ -63,7 +64,7 @@ public class Block {
 	public void UpdateSurroundingBlocks() {
 		for(int i = 0; i < neighbours.Length; i++) {
 			SIDE side = neighbours[i];
-			Block block = Chunk.GetBlock(chunk, position+SideToVector(side));
+			Block block = Chunk.GetBlock(chunk, position+SideToVector(side)*chunk.scale);
 			if(block == null || !block.blockType.rendered) continue;
 
 			if(HasToRender(block.blockType, blockType)) {
@@ -113,11 +114,10 @@ public class Block {
 	public static bool HasToRender(BlockType a, BlockType b) {
 		if(b == null) return false;
 
-		if(!b.rendered) {
-			if(!b.transparent) return false;
-			if(!a.transparent && b.transparent) return true;
-			if(a.transparent && b.transparent) return false;
-		}
+		if(!b.rendered) return true;
+		if(!b.transparent) return false;
+		if(!a.transparent && b.transparent) return true;
+		if(a.transparent && b.transparent) return false;
 
 		return false;
 	}
