@@ -2,17 +2,18 @@ using Godot;
 using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace VoxelPlugin {
 	[Flags]
-	public enum SIDE {
-		DEFAULT = 1,
-		TOP = 2,
-		BOTTOM = 4,
-		LEFT = 8,
-		RIGHT = 16,
-		FRONT = 32,
-		BACK = 64
+	public enum SIDE : byte {
+		DEFAULT = 1 << 0,
+		TOP = 1 << 1,
+		BOTTOM = 1 << 2,
+		LEFT = 1 << 3,
+		RIGHT = 1 << 4,
+		FRONT = 1 << 5,
+		BACK = 1 << 6
 	};
 
 public class Block {
@@ -26,7 +27,7 @@ public class Block {
 		SIDE.BACK
 	};
 
-	public SIDE activeSides = 0;
+	public byte activeSides = 0;
 
 	public Vector3 position;
 	public BlockType blockType;
@@ -39,6 +40,7 @@ public class Block {
 
 	public void SetBlockType(BlockType blockType, int priority = -1, bool updateChunk = true) {
 		if(priority > 0 && priority < this.priority) return;
+		if(this.blockType == blockType) return;
 
 		// if(this.blockType == null && blockType != null) Interlocked.Increment(ref chunk.drawnBlocks);
 		// else if(this.blockType != null && blockType == null) Interlocked.Decrement(ref chunk.drawnBlocks);
@@ -48,6 +50,7 @@ public class Block {
 	}
 
 	public void UpdateSelf() {
+		if(!blockType.rendered) return;
 		for(int i = 0; i < neighbours.Length; i++) {
 			SIDE side = neighbours[i];
 			if(HasToRender(blockType, Chunk.GetBlockType(chunk, position+SideToVector(side)))) {
@@ -62,7 +65,7 @@ public class Block {
 		for(int i = 0; i < neighbours.Length; i++) {
 			SIDE side = neighbours[i];
 			Block block = Chunk.GetBlock(chunk, position+SideToVector(side));
-			if(block == null) continue;
+			if(block == null || !block.blockType.rendered) continue;
 
 			if(HasToRender(block.blockType, blockType)) {
 				block.AddSide(GetOppositeSide(side));
@@ -109,31 +112,27 @@ public class Block {
 	}
 
 	public static bool HasToRender(BlockType a, BlockType b) {
-		if(a == null) return false;
 		if(b == null) return false;
 
-		if(!a.rendered) return false;
-
-		if(!b.rendered) {
-			if(!b.transparent) return false;
-			if(!a.transparent && b.transparent) return true;
-			if(a.transparent && b.transparent) return false;
-		}
+		if(!b.rendered) return true;
+		if(!b.transparent) return false;
+		if(!a.transparent && b.transparent) return true;
+		if(a.transparent && b.transparent) return false;
 
 		return false;
 	}
 
 	public void AddSide(SIDE side) {
-		activeSides |= side;
+		activeSides |= ((byte) side);
 	}
 
 	public void RemoveSide(SIDE side) {
-		activeSides &= ~side;
+		activeSides = (byte) (activeSides & ~((byte) side));
 	}
 
 	public IEnumerable<SIDE> GetActiveSides() {
 		foreach (SIDE value in Enum.GetValues(activeSides.GetType()))
-			if (activeSides.HasFlag(value))
+			if ((activeSides & ((byte) value)) != 0)
 				yield return value;
 	}
 }

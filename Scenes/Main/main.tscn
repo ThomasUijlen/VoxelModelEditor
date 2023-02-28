@@ -1,8 +1,21 @@
-[gd_scene load_steps=7 format=3 uid="uid://de55kuj1ermod"]
+[gd_scene load_steps=8 format=3 uid="uid://de55kuj1ermod"]
 
 [ext_resource type="Script" path="res://Scenes/Main/main.cs" id="1_ljqy4"]
 [ext_resource type="PackedScene" uid="uid://dorbw0vr4nrdq" path="res://addons/VoxelTerrain/Parts/World/VoxelWorld.tscn" id="2_toj0p"]
 [ext_resource type="PackedScene" uid="uid://cubdj5w4rb2jc" path="res://Assets/Editor/Camera/camera.tscn" id="3_oa4dd"]
+
+[sub_resource type="GDScript" id="GDScript_mmtbx"]
+script/source = "extends Node3D
+
+
+# Called when the node enters the scene tree for the first time.
+#func _ready():
+#	var sum : VoxelWorld = VoxelWorld.new()
+#	add_child(sum)
+#
+#	var mesh = load(\"res://addons/VoxelTerrain/Parts/Blocks/Mesh/VoxelFace.tres\")
+#	sum.prepare(mesh)
+"
 
 [sub_resource type="PhysicalSkyMaterial" id="PhysicalSkyMaterial_5kjyb"]
 energy_multiplier = 3.0
@@ -19,10 +32,14 @@ ssao_enabled = true
 ssao_intensity = 3.0
 sdfgi_enabled = true
 sdfgi_min_cell_size = 0.292969
+glow_enabled = true
+glow_bloom = 0.05
+glow_blend_mode = 1
 fog_light_color = Color(0.505882, 0.67451, 0.717647, 1)
 volumetric_fog_density = 0.03
 
 [node name="Main" type="Node3D"]
+script = SubResource("GDScript_mmtbx")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 visible = false
@@ -40,7 +57,7 @@ shadow_enabled = true
 directional_shadow_max_distance = 400.0
 
 [node name="VoxelWorld" parent="." instance=ExtResource("2_toj0p")]
-renderDistance = 20
+renderDistance = 40
 lazyDistance = 4
 
 [node name="Camera" parent="." instance=ExtResource("3_oa4dd")]

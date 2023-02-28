@@ -123,12 +123,12 @@ public partial class VoxelRenderer : Node3D
 	}
 
 	private void CollectFaces(Block[,,] grid) {
-		Vector3I size = new Vector3I(grid.GetLength(0), grid.GetLength(1), grid.GetLength(2));
+		Vector3I size = new Vector3I(grid.GetLength(1), grid.GetLength(0), grid.GetLength(2));
 
-		for(int x = 0; x < size.X; x++) {
-            for(int y = 0; y < size.Y; y++) {
-                for(int z = 0; z < size.Z; z++) {
-					Block block = grid[x,y,z];
+		for(int y = 0; y < Chunk.SIZE.Y; y++) {
+            for(int x = 0; x < Chunk.SIZE.X; x++) {
+                for(int z = 0; z < Chunk.SIZE.Z; z++) {
+					Block block = grid[y,x,z];
 					if(block.blockType == null || !block.blockType.rendered) continue;
 					CollectFace(block, SIDE.TOP);
 					CollectFace(block, SIDE.BOTTOM);
@@ -142,7 +142,8 @@ public partial class VoxelRenderer : Node3D
 	}
 
 	private void CollectFace(Block block, SIDE side) {
-		if(!block.activeSides.HasFlag(side)) return;
+		if((block.activeSides & ((byte) side)) == 0) return;
+		// (activeSides & ((byte) value)) != 0
 
 		BlockType blockType = block.blockType;
 		Vector3 direction = Block.SideToVector(side);
