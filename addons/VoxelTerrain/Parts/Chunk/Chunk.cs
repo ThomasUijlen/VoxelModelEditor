@@ -18,7 +18,7 @@ public partial class Chunk
     public VoxelWorld world;
     public Vector3 position;
 
-    public IGenerator generator;
+    public Generator generator;
 
     static ConcurrentBag<long> times = new ConcurrentBag<long>();
 

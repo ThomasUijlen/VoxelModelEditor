@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 
 namespace VoxelPlugin {
-public class NoiseCaves : IGenerator
+public class NoiseCaves : Generator
 {
     public int seed = 0;
     public Vector3 scale = Vector3.One;
@@ -17,7 +17,7 @@ public class NoiseCaves : IGenerator
         noise.Seed = seed;
     }
 
-	public void Generate(Chunk chunk) {
+	public override void Generate(Chunk chunk) {
         BlockType air = BlockLibrary.GetBlockType("Air");
 
         rng.Seed = Convert.ToUInt64(seed + Mathf.RoundToInt(Mathf.Abs(noise.GetNoise3Dv(chunk.position*1000f))*10000));

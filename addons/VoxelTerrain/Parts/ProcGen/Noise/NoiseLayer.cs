@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 
 namespace VoxelPlugin {
-public class NoiseLayer : IGenerator
+public class NoiseLayer : Generator
 {
     public int seed = 0;
     public Vector3 scale = Vector3.One;
@@ -24,7 +24,7 @@ public class NoiseLayer : IGenerator
         layers.Add(block);
     }
 
-	public void Generate(Chunk chunk) {
+	public override void Generate(Chunk chunk) {
         int airLayers = 0;
 
         for(int y = 0; y < Chunk.SIZE.Y; y++) {
