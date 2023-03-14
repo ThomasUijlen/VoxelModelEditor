@@ -57,7 +57,7 @@ shadow_enabled = true
 directional_shadow_max_distance = 400.0
 
 [node name="VoxelWorld" parent="." instance=ExtResource("2_toj0p")]
-renderDistance = 40
+renderDistance = 10
 lazyDistance = 4
 
 [node name="Camera" parent="." instance=ExtResource("3_oa4dd")]

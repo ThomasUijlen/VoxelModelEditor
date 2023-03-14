@@ -29,13 +29,18 @@ public class Block {
 
 	public byte activeSides = 0;
 
-	public Vector3 position;
+	public Vector3I position;
 	public BlockType blockType;
 	public Chunk chunk;
 	public int priority = 0;
 
 	public Block(Chunk chunk) {
 		this.chunk = chunk;
+	}
+
+	public void Remove() {
+		chunk = null;
+		blockType = null;
 	}
 
 	public void SetBlockType(BlockType blockType, int priority = -1, bool updateChunk = true) {
@@ -128,12 +133,6 @@ public class Block {
 
 	public void RemoveSide(SIDE side) {
 		activeSides = (byte) (activeSides & ~((byte) side));
-	}
-
-	public IEnumerable<SIDE> GetActiveSides() {
-		foreach (SIDE value in Enum.GetValues(activeSides.GetType()))
-			if ((activeSides & ((byte) value)) != 0)
-				yield return value;
 	}
 }
 }

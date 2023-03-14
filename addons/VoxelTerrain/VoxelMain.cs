@@ -41,10 +41,5 @@ public class VoxelMain
 		renderers.Enqueue(renderer);
 		renderer.Deactivate();
 	}
-
-	public static int getSeed(Vector3 origin)
-	{
-		return origin.GetHashCode();
-	}
 }
 }

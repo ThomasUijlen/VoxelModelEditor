@@ -15,7 +15,7 @@ public partial class Chunk
     public bool generating = true;
     public bool hasRenderer = false;
     public VoxelRenderer voxelRenderer;
-    public Node3D world;
+    public VoxelWorld world;
     public Vector3 position;
 
     public IGenerator generator;
@@ -62,14 +62,28 @@ public partial class Chunk
 			total += time;
 		}
 
-		if(times.Count > 0) GD.Print(total/times.Count);
+		//if(times.Count > 0) GD.Print(total/times.Count);
     }
 
     public void Remove() {
         DeleteVoxelRenderer();
+
+        for(int y = 0; y < SIZE.Y; y++) {
+            for(int x = 0; x < SIZE.X; x++) {
+                for(int z = 0; z < SIZE.Z; z++) {
+                    if(x == 0 || y == 0 || z == 0
+                    || x == SIZE.X-1 || y == SIZE.Y-1 || z == SIZE.Z-1) {
+                        Block block = grid[y,x,z];
+                        block.Remove();
+                    }
+                }
+            }
+        }
+
+        grid = null;
     }
 
-    public void DeleteVoxelRenderer() {
+    private void DeleteVoxelRenderer() {
         hasRenderer = false;
         if(voxelRenderer != null) {
             voxelRenderer.chunk = null;
@@ -79,7 +93,7 @@ public partial class Chunk
     }
 
 
-    public void CreateVoxelGrid() {
+    private void CreateVoxelGrid() {
         grid = new Block[SIZE.Y,SIZE.X,SIZE.Z];
         BlockType air = BlockLibrary.GetBlockType("Air");
 
@@ -87,7 +101,7 @@ public partial class Chunk
             for(int x = 0; x < SIZE.X; x++) {
                 for(int z = 0; z < SIZE.Z; z++) {
                     Block block = new Block(this);
-                    block.position = new Vector3(x,y,z) + position;
+                    block.position = new Vector3I(x,y,z) + Vector3ToVector3I(position);
                     block.SetBlockType(air);
                     grid[y,x,z] = block;
                 }
@@ -192,7 +206,7 @@ public partial class Chunk
     }
 
     public Block GetRandomBlock(RandomNumberGenerator rng) {
-        return grid[rng.RandiRange(0,SIZE.X-1),rng.RandiRange(0,SIZE.Y-1),rng.RandiRange(0,SIZE.Z-1)];
+        return grid[rng.RandiRange(0,SIZE.Y-1),rng.RandiRange(0,SIZE.X-1),rng.RandiRange(0,SIZE.Z-1)];
     }
 
     public static bool SetBlock(Vector3 position, BlockType blockType, int priority = -1) {

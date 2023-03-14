@@ -30,7 +30,7 @@ public static class BlockLibrary {
 		return null;
 	}
 
-	static public void ConstructTextureAtlas() {
+	static private void ConstructTextureAtlas() {
 		//Extract all textures from the BlockTypes. Sort textures into the same list if they are duplicate.
 		Dictionary<string, List<BlockTexture>> textures = new Dictionary<string, List<BlockTexture>>();
 		foreach(BlockType blockType in blockTypes.Values) {

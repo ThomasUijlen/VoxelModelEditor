@@ -62,23 +62,23 @@ public partial class main : Sprite2D
 			}
 		}
 
+		// if(Input.IsActionPressed("MouseRight")) {
+		// 	Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*40f;
+		// 	int radius = 1;
+
+		// 	for(int x = -radius; x < radius; x++) {
+		// 		for(int y = -radius; y < radius; y++) {
+		// 			for(int z = -radius; z < radius; z++) {
+		// 				Vector3 pos = new Vector3(x,y,z);
+		// 				float d = pos.DistanceTo(Vector3.Zero);
+		// 				if(d > radius) continue;
+		// 				Chunk.SetBlock(startCoord+pos, log);
+		// 			}
+		// 		}
+		// 	}
+		// }
+
 		if(Input.IsActionPressed("MouseRight")) {
-			Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*40f;
-			int radius = 1;
-
-			for(int x = -radius; x < radius; x++) {
-				for(int y = -radius; y < radius; y++) {
-					for(int z = -radius; z < radius; z++) {
-						Vector3 pos = new Vector3(x,y,z);
-						float d = pos.DistanceTo(Vector3.Zero);
-						if(d > radius) continue;
-						Chunk.SetBlock(startCoord+pos, log);
-					}
-				}
-			}
-		}
-
-		if(Input.IsActionPressed("MouseMiddle")) {
 			Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*30f;
 			int radius = 12;
 

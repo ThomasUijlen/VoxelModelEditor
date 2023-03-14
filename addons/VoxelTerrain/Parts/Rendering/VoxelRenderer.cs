@@ -15,9 +15,6 @@ public partial class VoxelRenderer : Node3D
 
 	private STATE activeState = STATE.DISABLED;
 
-	Block[,,] recentGrid;
-	Block[,,] activeGrid;
-
 	Queue<MeshInstance> meshes = new Queue<MeshInstance>();
 	List<MeshInstance> meshList = new List<MeshInstance>();
 
@@ -60,7 +57,6 @@ public partial class VoxelRenderer : Node3D
 					if(pool.ThreadFree()) {
 						timer = 0f;
 						activeState = STATE.UPDATING;
-						activeGrid = (Block[,,]) recentGrid.Clone();
 						pool.RequestFunctionCall(this, "UpdateMesh");
 						poolType = VoxelMain.POOL_TYPE.RENDERING_CLOSE;
 					}
@@ -87,7 +83,6 @@ public partial class VoxelRenderer : Node3D
 	bool changePending = false;
 	public void RequestUpdate(Block[,,] grid, bool close = true) {
 		if(!close) poolType = VoxelMain.POOL_TYPE.RENDERING;
-		recentGrid = grid;
 		
 		if(activeState == STATE.IDLE) {
 			activeState = STATE.WAITING_FOR_UPDATE;
@@ -101,7 +96,7 @@ public partial class VoxelRenderer : Node3D
 	private List<Quad> quads = new List<Quad>();
 
 	public void UpdateMesh() {
-		CollectFaces(activeGrid);
+		CollectFaces(chunk.grid);
 		CollectQuads();
 
 		MeshInstance newMeshInstance = meshes.Dequeue();

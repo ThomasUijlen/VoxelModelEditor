@@ -1,0 +1,149 @@
+@startuml
+
+enum POOL_TYPE {
+GENERATION
+SUGGESTIONS
+RENDERING
+RENDERING_CLOSE
+}
+
+enum SIDE {
+TOP
+BOTTOM
+LEFT
+RIGHT
+FRONT
+BACK
+}
+
+class VoxelMain {
++{static} GetThreadPool(POOL_TYPE pool, Node node)
++{static} GetRenderer(VoxelWorld world)
++{static} ReturnRenderer(VoxelRenderer renderer)
+}
+
+class VoxelWorld {
++int renderDistance
++int lazyDistance
++bool chunkThreadActive
++Vector3 playerPosition
+
++_Process(double delta)
++ChunkCheck()
++ProcessChunkSuggestions()
++CreateChunk(Vector3I coord)
++CreateVoxelRenderer(Vector3 position)
+-UpdateCoordLists()
+-CreateNewChunks()
+-DeleteOldChunks()
+-ChunkUpdateTimer(float delta)
+-SuggestionTimer(float delta)
+}
+
+class Chunk {
++Vector3I SIZE
++bool automaticUpdating
++bool generating
++bool hasRenderer
+
++Chunk(Vector3 position, VoxelWorld world)
++Prepare()
++CreateVoxelGrid()
++Update(bool fromBlock)
++UpdateSurroundingChunks(bool fromBlock)
++Remove()
++GetRandomBlock(RandomNumberGenerator rng)
++SetBlockLocal(Vector3 position, BlockType blockType, int priority)
++GetBlockLocal(Vector3 position)
++PositionToCoord(Vector3 position)
+-RegenerateChunk()
+-InitBlockSides()
+-UpdateEdges
+-CreateVoxelRenderer()
+-DeleteVoxelRenderer()
++{static} GetChunk(Vector3 position)
++{static} GetBlockType(Vector3 position)
++{static} GetBlockType(Chunk chunk, Vector3 position)
++{static} GetBlock(Vector3 position)
++{static} GetBlock(Chunk chunk, Vector3 position)
++{static} SetBlock(Vector3 position, BlockType blockType, int priority)
++{static} SetBlock(Chunk chunk, Vector3 position, BlockType blockType, int priority)
++{static} PositionToChunkCoord(Vector3 position)
++{static} Vector3ToVector3I(Vector3 vector)
++{static} Vector3IToVector3(Vector3I vector)
+}
+
+class Block {
++byte activeSides
++Vector3I position
++int priority
+
++Block(Chunk chunk)
++SetBlockType(BlockType blockType, int priority, bool updateChunk)
++UpdateSelf()
++UpdateSurroundingBlocks()
++UpdateAll()
++AddSide(SIDE side)
++RemoveSide(SIDE side)
++{static} SideToVector(SIDE side)
++{static} GetOppositeSide(SIDE side)
++{static} HasToRender(BlockType a, BlockType b)
+
+}
+
+class BlockType {
++Color modulate
++bool rendered
++bool transparent
+
++BlockType(Color modulate, int size, bool transparent)
++BlockType(Image defaultTexture, Color modulate, bool transparent)
++BlockType(Dictionary<SIDE, Image> textures, Color modulate, bool transparent)
++GetAllTextures()
+-CreateTextureTable()
+}
+
+class BlockTexture {
++Vector2 UVPosition
++Vector2 UVSize
++Image texture
+
++BlockTexture(BlockType owner, int size)
++BlockTexture(BlockType owner, Image texture)
+}
+
+class BlockLibrary {
++{static} Mesh voxelMesh
++{static} Image textureAtlas
++{static} ImageTexture texture
++{static} int textureWidth
++{static} float atlasScale
++{static} AddBlockType(string name, BlockType blockType)
++{static} GetBlockType(string name)
+-{static} ConstructTextureAtlas()
+-{static} ApplyTexture(Vector2I origin, int atlasWidth, float totalSize, BlockTexture blockTexture)
+-{static} CalculateAtlasSize(int textureCount, int width)
+}
+
+class VoxelRenderer {
++_Ready()
++_Process(double delta)
++Activate()
++Deactivate()
++RequestUpdate(Block[,,] grid, bool close)
++UpdateMesh()
+-CollectFaces(Block[,,] grid)
+-CollectFace(Block block, SIDE side)
+-CollectQuads()
+-ScanDirection(Vector3 position, int x, Vector3 axis, List<Vector3> faces)
+-GenerateMesh(MeshInstance meshInstance)
+}
+
+VoxelWorld "1" *-- "0..*" Chunk
+Chunk "1" *-- "0..*" Block
+Chunk --* VoxelRenderer
+Block -- "0..*" BlockType
+BlockLibrary -- "0..*" BlockType
+BlockType -- "1..*" BlockTexture
+
+@enduml
