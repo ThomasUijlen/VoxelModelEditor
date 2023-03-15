@@ -24,7 +24,7 @@ var settings : Dictionary = {
 			"Name" : "NoiseCaves",
 			"Settings" : {
 				"Seed" : 0,
-				"SpawnChance" : 10.0,
+				"SpawnChance" : 4.0,
 				"Radius" : 4,
 				"MinLength" : 10,
 				"MaxLength" : 20,

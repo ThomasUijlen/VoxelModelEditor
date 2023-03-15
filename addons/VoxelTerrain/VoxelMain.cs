@@ -7,7 +7,7 @@ public class VoxelMain
 {
 	public enum POOL_TYPE {
 		GENERATION = 10,
-		SUGGESTIONS = 5,
+		SUGGESTIONS = 1,
 		RENDERING = 2,
 		RENDERING_CLOSE = 10
 	};

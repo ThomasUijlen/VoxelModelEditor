@@ -38,7 +38,7 @@ public class NoiseCaves : Generator
 	public override void Generate(Chunk chunk) {
         BlockType air = BlockLibrary.GetBlockType("Air");
 
-        rng.Seed = Convert.ToUInt64(seed + Mathf.RoundToInt(Mathf.Abs(noise.GetNoise3Dv(chunk.position*100f))*100));
+        rng.Seed = Convert.ToUInt64(seed + Mathf.RoundToInt(Mathf.Abs(noise.GetNoise3Dv(chunk.position*1000f))*100));
 
         float n = rng.RandfRange(0f,100f);
 
