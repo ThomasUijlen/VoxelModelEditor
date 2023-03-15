@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 
 namespace VoxelPlugin {
-public class NoiseLayer : Generator
+public class NoiseTerrain : Generator
 {
     public int seed = 0;
     public Vector3 scale = Vector3.One;
@@ -14,10 +14,20 @@ public class NoiseLayer : Generator
 
     private FastNoiseLite noise = new FastNoiseLite();
 
-    public NoiseLayer(string firstLayer, float startHeight) {
-        AddLayer(firstLayer);
-        this.startHeight = startHeight;
-        noise.Seed = seed;
+    public NoiseTerrain() {
+        GD.Print("Added NoiseTerrain");
+    }
+
+    public override void ApplySettings(Godot.Collections.Dictionary<String, Variant> data) {
+        Godot.Collections.Dictionary<String, Variant> settings = (Godot.Collections.Dictionary<String, Variant>) data["Settings"];
+
+        seed = (int) settings["Seed"];
+        startHeight = (float) settings["StartHeight"];
+        foreach(String layer in ((Godot.Collections.Array) settings["Layers"])) {
+            AddLayer(layer);
+        }
+
+        base.ApplySettings(data);
     }
 
     public void AddLayer(string block) {
@@ -25,6 +35,7 @@ public class NoiseLayer : Generator
     }
 
 	public override void Generate(Chunk chunk) {
+        noise.Seed = seed;
         int airLayers = 0;
 
         for(int y = 0; y < Chunk.SIZE.Y; y++) {
@@ -47,8 +58,10 @@ public class NoiseLayer : Generator
             }
 
             if(airLayer) airLayers++;
-            if(airLayers > 3) return;
+            if(airLayers > 3) break;
         }
+
+        base.Generate(chunk);
     }
 }
 }

@@ -12,8 +12,31 @@ public class Generator
 		}
 	}
 
-	public virtual void ApplySettings(Dictionary<String, Variant> settings) {
-		
+	public virtual void ApplySettings(Godot.Collections.Dictionary<String, Variant> data) {
+		// Create children
+		Godot.Collections.Array children = (Godot.Collections.Array) data["Children"];
+		foreach(Godot.Collections.Dictionary<String, Variant> childData in children) {
+			Generator child = GetGenerator((String) childData["Name"]);
+			if(child == null) continue;
+
+			this.children.Add(child);
+			child.ApplySettings(childData);
+		}
+	}
+
+	private Generator GetGenerator(String name) {
+		Generator generator = null;
+
+		switch(name) {
+			case "NoiseTerrain":
+			generator = new NoiseTerrain();
+			break;
+			case "NoiseCaves":
+			generator = new NoiseCaves();
+			break;
+		}
+
+		return generator;
 	}
 }
 }

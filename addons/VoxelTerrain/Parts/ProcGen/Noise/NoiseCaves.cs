@@ -6,42 +6,63 @@ namespace VoxelPlugin {
 public class NoiseCaves : Generator
 {
     public int seed = 0;
+    public int radius = 4;
+    public int minLength = 10;
+    public int maxLength = 100;
+    public int minBranches = 0;
+    public int maxBranches = 5;
     public Vector3 scale = Vector3.One;
     public float caveSpawnChance = 0.01f;
 
     private FastNoiseLite noise = new FastNoiseLite();
     private RandomNumberGenerator rng = new RandomNumberGenerator();
 
-    public NoiseCaves(float caveSpawnChance) {
-        this.caveSpawnChance = caveSpawnChance;
-        noise.Seed = seed;
+    public NoiseCaves() {
+        GD.Print("Added NoiseCaves");
+    }
+
+    public override void ApplySettings(Godot.Collections.Dictionary<String, Variant> data) {
+        Godot.Collections.Dictionary<String, Variant> settings = (Godot.Collections.Dictionary<String, Variant>) data["Settings"];
+
+        seed = (int) settings["Seed"];
+        caveSpawnChance = (float) settings["SpawnChance"];
+        radius = (int) settings["Radius"];
+        minLength = (int) settings["MinLength"];
+        maxLength = (int) settings["MaxLength"];
+        minBranches = (int) settings["MinBranches"];
+        maxBranches = (int) settings["MaxBranches"];
+
+        base.ApplySettings(data);
     }
 
 	public override void Generate(Chunk chunk) {
         BlockType air = BlockLibrary.GetBlockType("Air");
 
-        rng.Seed = Convert.ToUInt64(seed + Mathf.RoundToInt(Mathf.Abs(noise.GetNoise3Dv(chunk.position*1000f))*10000));
+        rng.Seed = Convert.ToUInt64(seed + Mathf.RoundToInt(Mathf.Abs(noise.GetNoise3Dv(chunk.position*100f))*100));
 
         float n = rng.RandfRange(0f,100f);
 
-        if(n > caveSpawnChance) return;
-        Block block = chunk.GetRandomBlock(rng);
+        if(n < caveSpawnChance) {
+            Block block = chunk.GetRandomBlock(rng);
 
-        int tries = 50;
-        while(block.blockType == air && tries > 0) {
-            tries -= 1;
-            block = chunk.GetRandomBlock(rng);
+            int tries = 50;
+            while(block.blockType == air && tries > 0) {
+                tries -= 1;
+                block = chunk.GetRandomBlock(rng);
+            }
+
+            CreateCave(
+            block.position,
+            new Vector3(rng.RandfRange(-1,1), rng.RandfRange(-1,1), rng.RandfRange(-1,1)),
+            radius,
+            rng.RandiRange(minLength, maxLength),
+            rng.RandiRange(minBranches, maxBranches),
+            air,
+            chunk,
+            new List<Vector3>());
         }
 
-        CreateCave(
-        block.position,
-        new Vector3(rng.RandfRange(-1,1), rng.RandfRange(-1,1), rng.RandfRange(-1,1)),
-        4,
-        rng.RandiRange(10,100),
-        rng.RandiRange(2,5),
-        air,
-        chunk,
-        new List<Vector3>());
+        base.Generate(chunk);
     }
 
     private void CreateCave(

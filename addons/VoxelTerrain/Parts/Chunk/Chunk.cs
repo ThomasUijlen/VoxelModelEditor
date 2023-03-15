@@ -18,8 +18,6 @@ public partial class Chunk
     public VoxelWorld world;
     public Vector3 position;
 
-    public Generator generator;
-
     static ConcurrentBag<long> times = new ConcurrentBag<long>();
 
     public Chunk(Vector3 position, VoxelWorld world) {
@@ -30,22 +28,15 @@ public partial class Chunk
     }
 
     private void RegenerateChunk() {
-        CreateVoxelGrid();
-        Prepare();
+        automaticUpdating = false;
+        ClearVoxelGrid();
+        GenerateChunk();
     }
 
-    public void Prepare() {
+    public void GenerateChunk() {
         var watch = System.Diagnostics.Stopwatch.StartNew();
 
-        generator = new NoiseLayer("Stone",30f);
-        ((NoiseLayer) generator).AddLayer("Dirt");
-        ((NoiseLayer) generator).AddLayer("Dirt");
-        ((NoiseLayer) generator).AddLayer("Dirt");
-        ((NoiseLayer) generator).AddLayer("Grass");
-        generator.Generate(this);
-
-        // generator = new NoiseCaves(1f);
-        // generator.Generate(this);
+        world.generator.Generate(this);
 
         automaticUpdating = true;
         generating = false;
@@ -104,6 +95,18 @@ public partial class Chunk
                     block.position = new Vector3I(x,y,z) + Vector3ToVector3I(position);
                     block.SetBlockType(air);
                     grid[y,x,z] = block;
+                }
+            }
+        }
+    }
+
+    private void ClearVoxelGrid() {
+        BlockType air = BlockLibrary.GetBlockType("Air");
+
+        for(int y = 0; y < SIZE.Y; y++) {
+            for(int x = 0; x < SIZE.X; x++) {
+                for(int z = 0; z < SIZE.Z; z++) {
+                    grid[y,x,z].SetBlockType(air);
                 }
             }
         }

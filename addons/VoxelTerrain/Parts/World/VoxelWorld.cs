@@ -11,16 +11,28 @@ public partial class VoxelWorld : Node3D
 	public int renderDistance = 5;
 	[Export]
 	public int lazyDistance = 2;
+	[Export]
+	public Resource generationSettings;
 
 	private List<Vector3I> loadedCoords = new List<Vector3I>();
 	private List<Vector3I> lazyCoords = new List<Vector3I>();
 
 	private bool chunkThreadActive = false;
 
+	public Generator generator;
+
 	public Vector3 playerPosition = Vector3.Zero;
 
 	public override void _Ready() {
 		ProcessPriority = -10;
+		generationSettings.Connect("settingsChanged", Callable.From(SettingsChanged));
+		SettingsChanged();
+	}
+
+	public void SettingsChanged() {
+		generator = new Generator();
+		generator.ApplySettings((Godot.Collections.Dictionary<String, Variant>) generationSettings.Get("settings"));
+		Chunk.chunkSuggestions.Clear();
 	}
 
 	
@@ -122,7 +134,7 @@ public partial class VoxelWorld : Node3D
 
 		Chunk chunk = new Chunk(chunkPosition, this);
 		Chunk.chunkList[coord] = chunk;
-		chunk.Prepare();
+		chunk.GenerateChunk();
 	}
 
 	public void CreateVoxelRenderer(Vector3 position) {
