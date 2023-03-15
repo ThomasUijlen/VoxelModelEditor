@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://Assets/Editor/CollisionGrid/collision_grid.gd" id="1_guj54"]
 
 [sub_resource type="GDScript" id="GDScript_m2ax2"]
-script/source = "extends StaticBody3D
+script/source = "extends Node3D
 
 var api : VoxelAPI
 
@@ -11,23 +11,23 @@ var shape : CollisionShape3D
 
 func _ready():
 	shape = $CollisionShape3D
+	api = get_tree().current_scene
+	api.connect(\"worldChanged\", updateCollision)
 
-var t = 0.0
-func _process(delta):
-	t += delta
-	if t > 0.1:
-		t = 0.0
-		var type = api.getBlockType(global_position)
-		shape.disabled = type == \"Air\"
+func updateCollision():
+	var type = api.getBlockType(global_position)
+	shape.disabled = type == \"Air\"
 "
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_hyuhc"]
 
 [node name="CollisionGrid" type="Node3D"]
 script = ExtResource("1_guj54")
-boxSize = 10
 
-[node name="Box" type="StaticBody3D" parent="."]
+[node name="Box" type="RigidBody3D" parent="."]
+sleeping = true
+lock_rotation = true
+freeze = true
 script = SubResource("GDScript_m2ax2")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Box"]

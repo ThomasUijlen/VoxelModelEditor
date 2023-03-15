@@ -21,10 +21,11 @@ func _ready():
 			for z in range(boxSize):
 				var coord = Vector3(x,y,z)-Vector3.ONE*half
 				var newBlock = block.duplicate()
-				newBlock.api = api
 				newBlock.position = coord
 				add_child(newBlock)
 				boxes[coord] = newBlock
+	
+	block.queue_free()
 
 func _process(delta):
 	var cameraPos = get_viewport().get_camera_3d().global_position.round()
