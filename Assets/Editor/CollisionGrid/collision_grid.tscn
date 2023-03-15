@@ -23,6 +23,7 @@ func updateCollision():
 
 [node name="CollisionGrid" type="Node3D"]
 script = ExtResource("1_guj54")
+boxSize = Vector3(20, 20, 20)
 
 [node name="Box" type="RigidBody3D" parent="."]
 sleeping = true
