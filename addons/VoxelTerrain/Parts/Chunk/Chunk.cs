@@ -8,7 +8,7 @@ public partial class Chunk
 {
     public static Dictionary<Vector3I, Chunk> chunkList = new Dictionary<Vector3I, Chunk>();
 
-    public static Vector3I SIZE = new Vector3I(16,256,16);
+    public static Vector3I SIZE = new Vector3I(16,16,16);
     public Block[,,] grid;
 
     public bool automaticUpdating = false;
@@ -23,37 +23,15 @@ public partial class Chunk
     public Chunk(Vector3 position, VoxelWorld world) {
         this.position = position;
         this.world = world;
-
         CreateVoxelGrid();
     }
 
-    private void RegenerateChunk() {
-        automaticUpdating = false;
-        ClearVoxelGrid();
-        GenerateChunk();
-    }
-
     public void GenerateChunk() {
-        var watch = System.Diagnostics.Stopwatch.StartNew();
-
-        world.generator.Generate(this);
-
         automaticUpdating = true;
         generating = false;
         InitBlockSides();
         Update(false);
         UpdateSurroundingChunks();
-
-        watch.Stop();
-		var elapsedMs = watch.ElapsedMilliseconds;
-		times.Add(elapsedMs);
-
-        long total = 0;
-		foreach(long time in times) {
-			total += time;
-		}
-
-		//if(times.Count > 0) GD.Print(total/times.Count);
     }
 
     public void Remove() {
@@ -212,27 +190,27 @@ public partial class Chunk
         return grid[rng.RandiRange(0,SIZE.Y-1),rng.RandiRange(0,SIZE.X-1),rng.RandiRange(0,SIZE.Z-1)];
     }
 
-    public static bool SetBlock(Vector3 position, BlockType blockType, int priority = -1) {
+    public static bool SetBlock(Vector3 position, BlockType blockType) {
         Block block = GetBlock(position);
         if(block != null) {
-            block.SetBlockType(blockType, priority);
+            block.SetBlockType(blockType);
             return true;
         }
 
         return false;
     }
 
-    public static bool SetBlock(Chunk chunk, Vector3 position, BlockType blockType, int priority = -1) {
+    public static bool SetBlock(Chunk chunk, Vector3 position, BlockType blockType) {
         Block block = chunk.GetBlockLocal(position);
         if(block != null) {
-            block.SetBlockType(blockType, priority);
+            block.SetBlockType(blockType);
             return true;
         }
 
-        return SetBlock(position, blockType, priority);
+        return SetBlock(position, blockType);
     }
 
-    public bool SetBlockLocal(Vector3 position, BlockType blockType, int priority = -1) {
+    public bool SetBlockLocal(Vector3 position, BlockType blockType) {
         Vector3I blockCoord = PositionToCoord(position);
         if(blockCoord.X >= 0
             && blockCoord.Y >= 0
@@ -240,7 +218,7 @@ public partial class Chunk
             && blockCoord.X < SIZE.X
             && blockCoord.Y < SIZE.Y
             && blockCoord.Z < SIZE.Z) {
-                grid[blockCoord.Y, blockCoord.X, blockCoord.Z].SetBlockType(blockType, priority);
+                grid[blockCoord.Y, blockCoord.X, blockCoord.Z].SetBlockType(blockType);
                 return true;
             }
         return false;

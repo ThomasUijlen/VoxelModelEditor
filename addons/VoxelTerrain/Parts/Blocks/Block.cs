@@ -32,7 +32,6 @@ public class Block {
 	public Vector3I position;
 	public BlockType blockType;
 	public Chunk chunk;
-	public int priority = 0;
 
 	public Block(Chunk chunk) {
 		this.chunk = chunk;
@@ -43,12 +42,8 @@ public class Block {
 		blockType = null;
 	}
 
-	public void SetBlockType(BlockType blockType, int priority = -1, bool updateChunk = true) {
-		if(priority > 0 && priority < this.priority) return;
+	public void SetBlockType(BlockType blockType, bool updateChunk = true) {
 		if(this.blockType == blockType) return;
-
-		// if(this.blockType == null && blockType != null) Interlocked.Increment(ref chunk.drawnBlocks);
-		// else if(this.blockType != null && blockType == null) Interlocked.Decrement(ref chunk.drawnBlocks);
 
 		this.blockType = blockType;
 		if(updateChunk && chunk.automaticUpdating) UpdateAll();	

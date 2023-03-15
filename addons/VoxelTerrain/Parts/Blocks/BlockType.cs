@@ -18,6 +18,7 @@ public partial class BlockType : Resource {
 	public Color modulate;
 	public bool rendered = true;
 	public bool transparent = false;
+	public string name;
 
 	public BlockType(Color modulate, int size, bool transparent = false) {
 		textures.Add(SIDE.DEFAULT, new BlockTexture(this, size));

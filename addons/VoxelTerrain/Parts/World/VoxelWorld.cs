@@ -11,34 +11,35 @@ public partial class VoxelWorld : Node3D
 	public int renderDistance = 5;
 	[Export]
 	public int lazyDistance = 2;
-	[Export]
-	public Resource generationSettings;
 
 	private List<Vector3I> loadedCoords = new List<Vector3I>();
 	private List<Vector3I> lazyCoords = new List<Vector3I>();
 
 	private bool chunkThreadActive = false;
 
-	public Generator generator;
-
 	public Vector3 playerPosition = Vector3.Zero;
 
 	public override void _Ready() {
 		ProcessPriority = -10;
-		generationSettings.Connect("settingsChanged", Callable.From(SettingsChanged));
-		SettingsChanged();
 	}
 
-	public void SettingsChanged() {
-		generator = new Generator();
-		generator.ApplySettings((Godot.Collections.Dictionary<String, Variant>) generationSettings.Get("settings"));
-		Chunk.chunkSuggestions.Clear();
+	//API functions
+	public void SetBlock(Vector3 coord, String rawName) {
+		string name = rawName;
+		BlockType type = BlockLibrary.GetBlockType(rawName);
+		if(type == null) return;
+		Chunk.SetBlock(coord, type);
+	}
+
+	public String GetBlockType(Vector3 coord) {
+		BlockType type = Chunk.GetBlockType(coord);
+		if(type == null) return "Air";
+		return type.name;
 	}
 
 	
 	public override void _Process(double delta) {
 		ChunkUpdateTimer(Convert.ToSingle(delta));
-		SuggestionTimer(Convert.ToSingle(delta));
 		playerPosition = GetViewport().GetCamera3D().GlobalPosition;
 	}
 
@@ -53,21 +54,6 @@ public partial class VoxelWorld : Node3D
 		VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.GENERATION, this).RequestFunctionCall(this, "ChunkCheck");
 	}
 
-
-	List<Chunk> suggestionChunks = new List<Chunk>();
-	float suggestionTimer = 0.0f;
-	bool suggestionThreadActive = false;
-	private void SuggestionTimer(float delta) {
-		suggestionTimer -= delta;
-		if(suggestionTimer > 0.0f) return;
-		suggestionTimer = 1.0f;
-
-		if(suggestionThreadActive) return;
-		suggestionThreadActive = true;
-		suggestionChunks.AddRange(Chunk.chunkList.Values);
-		VoxelMain.GetThreadPool(VoxelMain.POOL_TYPE.SUGGESTIONS, this).RequestFunctionCall(this, "ProcessChunkSuggestions");
-	}
-
 	public void ChunkCheck() {
 		UpdateCoordLists();
 		DeleteOldChunks();
@@ -75,15 +61,8 @@ public partial class VoxelWorld : Node3D
 		chunkThreadActive = false;
 	}
 
-	public void ProcessChunkSuggestions() {
-		for(int i = 0; i < suggestionChunks.Count; i++) suggestionChunks[i]?.ProcessSuggestions();
-		suggestionChunks.Clear();
-		suggestionThreadActive = false;
-	}
-
 	private void UpdateCoordLists() {
 		Vector3I cameraChunkCoord = Chunk.PositionToChunkCoord(playerPosition);
-		cameraChunkCoord.Y = 0;
 
 		loadedCoords.Clear();
 		lazyCoords.Clear();
@@ -92,7 +71,7 @@ public partial class VoxelWorld : Node3D
 		int lazyDistance = Mathf.CeilToInt((this.renderDistance + this.lazyDistance));
 
 		for(int x = -lazyDistance; x < lazyDistance; x++) {
-			for(int y = 0; y < 1; y++) {
+			for(int y = -lazyDistance; y < lazyDistance; y++) {
 				for(int z = -lazyDistance; z < lazyDistance; z++) {
 					Vector3 chunkCoord = cameraChunkCoord + new Vector3(x,y,z);
 					lazyCoords.Add(Chunk.Vector3ToVector3I(chunkCoord));
@@ -101,7 +80,7 @@ public partial class VoxelWorld : Node3D
 		}
 
 		for(int x = -renderDistance; x < renderDistance; x++) {
-			for(int y = 0; y < 1; y++) {
+			for(int y = -lazyDistance; y < lazyDistance; y++) {
 				for(int z = -renderDistance; z < renderDistance; z++) {
 					Vector3 chunkCoord = cameraChunkCoord + new Vector3(x,y,z);
 					loadedCoords.Add(Chunk.Vector3ToVector3I(chunkCoord));
