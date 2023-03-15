@@ -20,6 +20,7 @@ public static class BlockLibrary {
 	}
 
 	static public BlockType AddBlockType(string name, BlockType blockType) {
+		blockType.name = name;
 		blockTypes.Add(name, blockType);
 		ConstructTextureAtlas();
 		return blockType;

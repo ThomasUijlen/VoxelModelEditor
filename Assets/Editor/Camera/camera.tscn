@@ -64,6 +64,7 @@ mesh = SubResource("QuadMesh_12bpe")
 surface_material_override/0 = SubResource("ShaderMaterial_6pu8h")
 
 [node name="OmniLight3D" type="OmniLight3D" parent="."]
+visible = false
 light_color = Color(1, 0.537255, 0.333333, 1)
 light_energy = 10.0
 omni_range = 20.0

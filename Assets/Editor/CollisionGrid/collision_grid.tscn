@@ -1,0 +1,35 @@
+[gd_scene load_steps=4 format=3 uid="uid://c4p0x515p8yw7"]
+
+[ext_resource type="Script" path="res://Assets/Editor/CollisionGrid/collision_grid.gd" id="1_guj54"]
+
+[sub_resource type="GDScript" id="GDScript_m2ax2"]
+script/source = "extends StaticBody3D
+
+var api : VoxelAPI
+
+var shape : CollisionShape3D
+
+func _ready():
+	shape = $CollisionShape3D
+
+var t = 0.0
+func _process(delta):
+	t += delta
+	if t > 0.1:
+		t = 0.0
+		var type = api.getBlockType(global_position)
+		shape.disabled = type == \"Air\"
+"
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hyuhc"]
+
+[node name="CollisionGrid" type="Node3D"]
+script = ExtResource("1_guj54")
+boxSize = 10
+
+[node name="Box" type="StaticBody3D" parent="."]
+script = SubResource("GDScript_m2ax2")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Box"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, 0.5)
+shape = SubResource("BoxShape3D_hyuhc")

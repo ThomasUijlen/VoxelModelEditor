@@ -46,21 +46,21 @@ public partial class main : Sprite2D
     {
 		Vector3 cameraPos = GetViewport().GetCamera3D().GlobalPosition;
 
-		if(Input.IsActionPressed("MouseLeft")) {
-			Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*40f;
-			int radius = 8;
+		// if(Input.IsActionPressed("MouseLeft")) {
+		// 	Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*40f;
+		// 	int radius = 8;
 
-			for(int x = -radius; x < radius; x++) {
-				for(int y = -radius; y < radius; y++) {
-					for(int z = -radius; z < radius; z++) {
-						Vector3 pos = new Vector3(x,y,z);
-						float d = pos.DistanceTo(Vector3.Zero);
-						if(d > radius) continue;
-						Chunk.SetBlock(startCoord+pos, stone);
-					}
-				}
-			}
-		}
+		// 	for(int x = -radius; x < radius; x++) {
+		// 		for(int y = -radius; y < radius; y++) {
+		// 			for(int z = -radius; z < radius; z++) {
+		// 				Vector3 pos = new Vector3(x,y,z);
+		// 				float d = pos.DistanceTo(Vector3.Zero);
+		// 				if(d > radius) continue;
+		// 				Chunk.SetBlock(startCoord+pos, stone);
+		// 			}
+		// 		}
+		// 	}
+		// }
 
 		// if(Input.IsActionPressed("MouseRight")) {
 		// 	Vector3 startCoord = cameraPos - GetViewport().GetCamera3D().GlobalTransform.Basis.Z*40f;

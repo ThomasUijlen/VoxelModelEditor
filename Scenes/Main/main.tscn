@@ -1,22 +1,11 @@
-[gd_scene load_steps=10 format=3 uid="uid://de55kuj1ermod"]
+[gd_scene load_steps=18 format=3 uid="uid://de55kuj1ermod"]
 
+[ext_resource type="Script" path="res://Scenes/Main/VoxelAPI.gd" id="1_6mhgk"]
 [ext_resource type="Script" path="res://Scenes/Main/main.cs" id="1_ljqy4"]
 [ext_resource type="PackedScene" uid="uid://dorbw0vr4nrdq" path="res://addons/VoxelTerrain/Parts/World/VoxelWorld.tscn" id="2_toj0p"]
 [ext_resource type="PackedScene" uid="uid://cubdj5w4rb2jc" path="res://Assets/Editor/Camera/camera.tscn" id="3_oa4dd"]
-[ext_resource type="Script" path="res://addons/VoxelTerrain/Parts/ProcGen/GenerationSettings.gd" id="3_x404j"]
-
-[sub_resource type="GDScript" id="GDScript_mmtbx"]
-script/source = "extends Node3D
-
-
-# Called when the node enters the scene tree for the first time.
-#func _ready():
-#	var sum : VoxelWorld = VoxelWorld.new()
-#	add_child(sum)
-#
-#	var mesh = load(\"res://addons/VoxelTerrain/Parts/Blocks/Mesh/VoxelFace.tres\")
-#	sum.prepare(mesh)
-"
+[ext_resource type="PackedScene" uid="uid://c4p0x515p8yw7" path="res://Assets/Editor/CollisionGrid/collision_grid.tscn" id="4_05myi"]
+[ext_resource type="Texture2D" uid="uid://m0phw6cujdwm" path="res://Assets/Textures/Grid.png" id="4_clykf"]
 
 [sub_resource type="PhysicalSkyMaterial" id="PhysicalSkyMaterial_5kjyb"]
 energy_multiplier = 3.0
@@ -39,11 +28,107 @@ glow_blend_mode = 1
 fog_light_color = Color(0.505882, 0.67451, 0.717647, 1)
 volumetric_fog_density = 0.03
 
-[sub_resource type="Resource" id="Resource_84kpn"]
-script = ExtResource("3_x404j")
+[sub_resource type="BoxMesh" id="BoxMesh_6fxws"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pj8y8"]
+transparency = 1
+albedo_color = Color(1, 0, 0.0705882, 0.788235)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0w3es"]
+transparency = 1
+albedo_color = Color(0, 1, 0.0235294, 0.788235)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_xjb0l"]
+transparency = 1
+albedo_color = Color(0, 0.0352941, 1, 0.788235)
+
+[sub_resource type="GDScript" id="GDScript_c1l0o"]
+script/source = "extends Node3D
+
+func _process(delta):
+	var cameraPos = get_viewport().get_camera_3d().global_position
+	cameraPos.y = 0
+	cameraPos = cameraPos.round()
+	global_position = cameraPos
+"
+
+[sub_resource type="QuadMesh" id="QuadMesh_vrq1g"]
+
+[sub_resource type="Shader" id="Shader_4uge6"]
+code = "// NOTE: Shader automatically converted from Godot Engine 4.0.stable.mono's StandardMaterial3D.
+
+shader_type spatial;
+render_mode blend_mix,depth_draw_opaque,cull_back,diffuse_burley,specular_schlick_ggx,unshaded;
+uniform vec4 albedo : source_color;
+uniform sampler2D texture_albedo : source_color,filter_nearest,repeat_enable;
+uniform float distance_fade_min;
+uniform float distance_fade_max;
+uniform float alpha_scissor_threshold;
+uniform float point_size : hint_range(0,128);
+uniform float roughness : hint_range(0,1);
+uniform sampler2D texture_metallic : hint_default_white,filter_nearest,repeat_enable;
+uniform vec4 metallic_texture_channel;
+uniform sampler2D texture_roughness : hint_roughness_r,filter_nearest,repeat_enable;
+uniform float specular;
+uniform float metallic;
+uniform vec3 uv1_scale;
+uniform vec3 uv1_offset;
+uniform vec3 uv2_scale;
+uniform vec3 uv2_offset;
+
+
+void vertex() {
+	UV=UV*uv1_scale.xy+uv1_offset.xy;
+}
+
+
+
+
+
+
+void fragment() {
+	vec2 base_uv = UV;
+	vec4 albedo_tex = texture(texture_albedo,base_uv);
+	ALBEDO = albedo.rgb * albedo_tex.rgb;
+	float metallic_tex = dot(texture(texture_metallic,base_uv),metallic_texture_channel);
+	METALLIC = metallic_tex * metallic;
+	vec4 roughness_texture_channel = vec4(1.0,0.0,0.0,0.0);
+	float roughness_tex = dot(texture(texture_roughness,base_uv),roughness_texture_channel);
+	ROUGHNESS = roughness_tex * roughness;
+	SPECULAR = specular;
+	ALPHA *= albedo.a * albedo_tex.a;
+	ALPHA_SCISSOR_THRESHOLD = alpha_scissor_threshold;
+	{
+		float fade_distance = length(VERTEX);
+		const vec3 magic = vec3(0.06711056f, 0.00583715f, 52.9829189f);		float fade = 1.0f-clamp(smoothstep(distance_fade_min, distance_fade_max, fade_distance), 0.0, 1.0);
+		if (fade < 0.001 || fade < fract(magic.z * fract(dot(FRAGCOORD.xy, magic.xy)))) {
+			discard;
+		}
+	}
+
+}
+"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pf60y"]
+render_priority = 0
+shader = SubResource("Shader_4uge6")
+shader_parameter/albedo = Color(1, 1, 1, 1)
+shader_parameter/distance_fade_min = 20.0
+shader_parameter/distance_fade_max = 40.0
+shader_parameter/alpha_scissor_threshold = 0.5
+shader_parameter/point_size = 1.0
+shader_parameter/roughness = 1.0
+shader_parameter/metallic_texture_channel = Plane(1, 0, 0, 0)
+shader_parameter/specular = 0.5
+shader_parameter/metallic = 0.0
+shader_parameter/uv1_scale = Vector3(100, 100, 100)
+shader_parameter/uv1_offset = Vector3(0, 0, 0)
+shader_parameter/uv2_scale = Vector3(1, 1, 1)
+shader_parameter/uv2_offset = Vector3(0, 0, 0)
+shader_parameter/texture_albedo = ExtResource("4_clykf")
 
 [node name="Main" type="Node3D"]
-script = SubResource("GDScript_mmtbx")
+script = ExtResource("1_6mhgk")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 visible = false
@@ -61,9 +146,43 @@ shadow_enabled = true
 directional_shadow_max_distance = 400.0
 
 [node name="VoxelWorld" parent="." instance=ExtResource("2_toj0p")]
-renderDistance = 20
-lazyDistance = 4
-generationSettings = SubResource("Resource_84kpn")
+renderDistance = 10
 
 [node name="Camera" parent="." instance=ExtResource("3_oa4dd")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 120, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 0)
+flySpeed = 20.0
+
+[node name="CollisionGrid" parent="." instance=ExtResource("4_05myi")]
+
+[node name="X" type="MeshInstance3D" parent="."]
+transform = Transform3D(1000, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0)
+mesh = SubResource("BoxMesh_6fxws")
+skeleton = NodePath("../Grid")
+surface_material_override/0 = SubResource("StandardMaterial3D_pj8y8")
+
+[node name="Y" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.37114e-05, -0.05, 0, 1000, -2.18557e-09, 0, 0, 0, 0.05, 0, 0, 0)
+mesh = SubResource("BoxMesh_6fxws")
+skeleton = NodePath("../Grid")
+surface_material_override/0 = SubResource("StandardMaterial3D_0w3es")
+
+[node name="Z" type="MeshInstance3D" parent="."]
+transform = Transform3D(-4.37114e-05, -0.05, -2.18557e-09, 0, -2.18557e-09, 0.05, -1000, 2.18557e-09, 9.55343e-17, 0, 0, 0)
+mesh = SubResource("BoxMesh_6fxws")
+skeleton = NodePath("../Grid")
+surface_material_override/0 = SubResource("StandardMaterial3D_xjb0l")
+
+[node name="Grid" type="Node3D" parent="."]
+script = SubResource("GDScript_c1l0o")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Grid"]
+transform = Transform3D(100, 0, 0, 0, -4.37114e-06, 100, 0, -100, -4.37114e-06, 0, 0.01, 0)
+mesh = SubResource("QuadMesh_vrq1g")
+skeleton = NodePath("../..")
+surface_material_override/0 = SubResource("ShaderMaterial_pf60y")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="Grid"]
+transform = Transform3D(-100, -3.82137e-13, 8.74228e-06, -8.74228e-06, 4.37114e-06, -100, 0, -100, -4.37114e-06, 0, 0.01, 0)
+mesh = SubResource("QuadMesh_vrq1g")
+skeleton = NodePath("../..")
+surface_material_override/0 = SubResource("ShaderMaterial_pf60y")
