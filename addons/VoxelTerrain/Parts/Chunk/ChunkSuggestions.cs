@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 namespace VoxelPlugin {
 public partial class Chunk
 {
-    private static ConcurrentDictionary<Vector3I, SuggestionLib> chunkSuggestions = new ConcurrentDictionary<Vector3I, SuggestionLib>();
+    public static ConcurrentDictionary<Vector3I, SuggestionLib> chunkSuggestions = new ConcurrentDictionary<Vector3I, SuggestionLib>();
 
     public static void SuggestChange(Chunk chunk, Vector3 position, BlockType blockType, int priority = 0) {
         if(chunk != null) {
