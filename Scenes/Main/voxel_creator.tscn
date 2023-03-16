@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://byxtmw3ptkd42"]
+[gd_scene load_steps=11 format=3 uid="uid://byxtmw3ptkd42"]
 
 [ext_resource type="Script" path="res://Scenes/Main/voxel_creator.gd" id="1_ejpk5"]
 [ext_resource type="PackedScene" uid="uid://dsfq2ry7kv1kf" path="res://Scenes/UI/VoxelTypeList/voxel_type_list.tscn" id="2_0tvr6"]
@@ -10,6 +10,18 @@ bg_color = Color(0.0941176, 0.0941176, 0.0941176, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_scol3"]
 bg_color = Color(0.156863, 0.290196, 0.156863, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ko6bh"]
+bg_color = Color(0.0784314, 0.0784314, 0.0784314, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_samhl"]
+bg_color = Color(0.321569, 0.160784, 0.168627, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rk8jp"]
+bg_color = Color(0.321569, 0.160784, 0.168627, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_umk17"]
+bg_color = Color(0.321569, 0.160784, 0.168627, 1)
 
 [node name="VoxelCreator" type="Node2D"]
 script = ExtResource("1_ejpk5")
@@ -101,5 +113,71 @@ side = 32
 layout_mode = 2
 side = 64
 
+[node name="NewVoxelPopup" type="CenterContainer" parent="."]
+visible = false
+custom_minimum_size = Vector2(1920, 1080)
+offset_right = 40.0
+offset_bottom = 40.0
+mouse_filter = 0
+
+[node name="PanelContainer" type="PanelContainer" parent="NewVoxelPopup"]
+custom_minimum_size = Vector2(500, 300)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ko6bh")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="NewVoxelPopup/PanelContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="Name" type="Label" parent="NewVoxelPopup/PanelContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Create Voxel Type"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="Control" type="Control" parent="NewVoxelPopup/PanelContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 25)
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="NewVoxelPopup/PanelContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="VoxelName" type="LineEdit" parent="NewVoxelPopup/PanelContainer/VBoxContainer/HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(300, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+placeholder_text = "Voxel Name"
+alignment = 1
+max_length = 20
+
+[node name="Control2" type="Control" parent="NewVoxelPopup/PanelContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 25)
+layout_mode = 2
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="NewVoxelPopup/PanelContainer/VBoxContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="Create" type="Button" parent="NewVoxelPopup/PanelContainer/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+focus_mode = 0
+text = "Create"
+
+[node name="Cancel" type="Button" parent="NewVoxelPopup/PanelContainer/VBoxContainer/HBoxContainer2"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+focus_mode = 0
+theme_override_styles/normal = SubResource("StyleBoxFlat_samhl")
+theme_override_styles/hover = SubResource("StyleBoxFlat_rk8jp")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_umk17")
+text = "Cancel"
+
 [connection signal="pressed" from="Container/HBoxContainer/CenterContainer/VBoxContainer/HBoxContainer/PanelContainer/Add" to="." method="_on_add_pressed"]
 [connection signal="typeSelected" from="Container/HBoxContainer/CenterContainer/VBoxContainer/VoxelTypeList" to="." method="_on_voxel_type_list_type_selected"]
+[connection signal="pressed" from="NewVoxelPopup/PanelContainer/VBoxContainer/HBoxContainer2/Create" to="." method="_on_create_pressed"]
+[connection signal="pressed" from="NewVoxelPopup/PanelContainer/VBoxContainer/HBoxContainer2/Cancel" to="." method="_on_cancel_pressed"]

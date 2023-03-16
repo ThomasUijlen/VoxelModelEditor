@@ -33,6 +33,7 @@ func _ready():
 
 func prepare():
 	$Container/Texture.texture = ImageTexture.create_from_image(api.getTexture(name, VoxelAPI.SIDE.TOP))
+	$Container/Texture.modulate = api.getModulate(name)
 	$Container/Name.text = name
 
 func _on_mouse_entered():

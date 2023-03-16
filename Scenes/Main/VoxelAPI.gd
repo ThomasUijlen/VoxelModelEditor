@@ -61,6 +61,9 @@ func setBlock(coord : Vector3, name : String):
 func getBlockType(coord : Vector3) -> String:
 	return $VoxelEditor/VoxelWorld.call("GetBlockType", coord)
 
+func hasBlockType(name : String) -> bool:
+	return $VoxelEditor/VoxelWorld.call("HasBlockType", name)
+
 func getBlockTypes() -> Array:
 	return $VoxelEditor/VoxelWorld.call("GetBlockTypes")
 
@@ -69,6 +72,9 @@ func createBlockType(name : String, image, modulate : Color, rendered : bool = t
 
 func getTexture(name : String, side : SIDE) -> Image:
 	return $VoxelEditor/VoxelWorld.call("GetTexture", name, side)
+
+func getModulate(name : String) -> Color:
+	return $VoxelEditor/VoxelWorld.call("GetModulate", name)
 
 func setTexture(name : String, side : SIDE, texture : Image):
 	$VoxelEditor/VoxelWorld.call("SetTexture", name, side, texture)

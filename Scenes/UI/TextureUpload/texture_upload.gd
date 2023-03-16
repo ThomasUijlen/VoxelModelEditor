@@ -9,6 +9,7 @@ var typeName : String
 func prepare(name):
 	typeName = name
 	$HBoxContainer/Container/Texture.texture = ImageTexture.create_from_image(api.getTexture(name, side))
+	$HBoxContainer/Container/Texture.modulate = api.getModulate(name)
 	$HBoxContainer/Name.text = "Side: "+str(api.sideToStr(side))
 
 func _ready():

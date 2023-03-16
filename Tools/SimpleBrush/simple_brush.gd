@@ -116,6 +116,11 @@ func getData() -> String:
 	text += "\n"
 	text += "Brush Position: "+str($Cubes.global_position.floor())
 	text += "\n"
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+		text += "Active: [color=PALE_VIOLET_RED]false[/color]  [i][color=#abd7cf](Press TAB)[/color][/i]"
+	else:
+		text += "Active: [color=PALE_GREEN]true[/color]  [i][color=#abd7cf](Press TAB)[/color][/i]"
+	text += "\n"
 	text += "\n"
 	text += "[b]Tool Settings:[/b]"
 	text += "\n"

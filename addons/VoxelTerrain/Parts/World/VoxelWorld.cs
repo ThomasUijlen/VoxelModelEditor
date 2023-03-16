@@ -53,8 +53,19 @@ public partial class VoxelWorld : Node3D
 		return type.textureTable[side].texture;
 	}
 
+	public Color GetModulate(String rawName) {
+		BlockType type = BlockLibrary.GetBlockType(rawName);
+		if(type == null || !type.rendered) return new Color(1,1,1);
+		return type.modulate;
+	}
+
 	public void SetTexture(String rawName, SIDE side, Image texture) {
 		BlockLibrary.SetTexture(rawName, side, texture);
+	}
+
+	public bool HasBlockType(String rawName) {
+		BlockType type = BlockLibrary.GetBlockType(rawName);
+		return type != null;
 	}
 
 	public Godot.Collections.Array GetBlockTypes() {

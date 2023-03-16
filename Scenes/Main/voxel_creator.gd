@@ -11,5 +11,13 @@ func _on_voxel_type_list_type_selected(name):
 			texture.prepare(name)
 
 func _on_add_pressed():
-	api.createBlockType(str(randi_range(0,10000)), null, Color.RED)
+	$NewVoxelPopup.visible = true
+
+func _on_create_pressed():
+	var name = %VoxelName.text
+	if api.hasBlockType(name): return
+	api.createBlockType(name, null, Color.WHITE)
 	%VoxelTypeList.refreshTypeList()
+
+func _on_cancel_pressed():
+	$NewVoxelPopup.visible = false
