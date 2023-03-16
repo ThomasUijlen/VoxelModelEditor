@@ -37,6 +37,43 @@ public partial class VoxelWorld : Node3D
 		return type.name;
 	}
 
+	public void CreateBlockType(String rawName, Image image, Color modulate, bool rendered) {
+		if(image == null) {
+			BlockLibrary.AddBlockType(rawName, new BlockType(modulate, BlockLibrary.textureWidth));
+		} else {
+			BlockLibrary.AddBlockType(rawName, new BlockType(image, modulate));
+		}
+
+		BlockLibrary.GetBlockType(rawName).rendered = rendered;
+	}
+
+	public Image GetTexture(String rawName, SIDE side) {
+		BlockType type = BlockLibrary.GetBlockType(rawName);
+		if(type == null || !type.rendered) return null;
+		return type.textureTable[side].texture;
+	}
+
+	public void SetTexture(String rawName, SIDE side, Image texture) {
+		BlockLibrary.SetTexture(rawName, side, texture);
+	}
+
+	public Godot.Collections.Array GetBlockTypes() {
+		Godot.Collections.Array array = new Godot.Collections.Array();
+		foreach(string blockType in BlockLibrary.blockTypes.Keys) {
+			array.Add(blockType);
+		}
+		return array;
+	}
+
+	public int GetTextureSize() {
+		return BlockLibrary.textureWidth;
+	}
+
+
+
+
+
+
 	
 	public override void _Process(double delta) {
 		ChunkUpdateTimer(Convert.ToSingle(delta));
@@ -124,7 +161,7 @@ public partial class VoxelWorld : Node3D
         voxelRenderer.Position = chunk.position;
 		chunk.voxelRenderer = voxelRenderer;
 		voxelRenderer.chunk = chunk;
-		voxelRenderer.RequestUpdate(chunk.grid);
+		voxelRenderer.RequestUpdate();
         if(!voxelRenderer.IsInsideTree()) AddChild(voxelRenderer);
 	}
 

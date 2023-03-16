@@ -6,6 +6,19 @@ signal worldChanged
 var camera : Camera3D
 var previousCamPos : Vector3
 
+enum SIDE {
+	DEFAULT = 1 << 0,
+	TOP = 1 << 1,
+	BOTTOM = 1 << 2,
+	LEFT = 1 << 3,
+	RIGHT = 1 << 4,
+	FRONT = 1 << 5,
+	BACK = 1 << 6
+}
+
+func _enter_tree():
+	createBlockType("Default", null, Color.WHITE_SMOKE)
+
 func _ready():
 	camera = get_viewport().get_camera_3d()
 
@@ -23,9 +36,42 @@ func _process(delta):
 		changed = false
 		emit_signal("worldChanged")
 
+func sideToStr(side : SIDE) -> String:
+	match(side):
+		SIDE.DEFAULT:
+			return "Default"
+		SIDE.TOP:
+			return "Top"
+		SIDE.BOTTOM:
+			return "Bottom"
+		SIDE.LEFT:
+			return "Left"
+		SIDE.RIGHT:
+			return "Right"
+		SIDE.BACK:
+			return "Back"
+		SIDE.FRONT:
+			return "Front"
+	return ""
+
 func setBlock(coord : Vector3, name : String):
 	changed = true
-	$VoxelWorld.call("SetBlock", coord, name)
+	$VoxelEditor/VoxelWorld.call("SetBlock", coord, name)
 
 func getBlockType(coord : Vector3) -> String:
-	return $VoxelWorld.call("GetBlockType", coord)
+	return $VoxelEditor/VoxelWorld.call("GetBlockType", coord)
+
+func getBlockTypes() -> Array:
+	return $VoxelEditor/VoxelWorld.call("GetBlockTypes")
+
+func createBlockType(name : String, image, modulate : Color, rendered : bool = true):
+	$VoxelEditor/VoxelWorld.call("CreateBlockType", name, image, modulate, rendered)
+
+func getTexture(name : String, side : SIDE) -> Image:
+	return $VoxelEditor/VoxelWorld.call("GetTexture", name, side)
+
+func setTexture(name : String, side : SIDE, texture : Image):
+	$VoxelEditor/VoxelWorld.call("SetTexture", name, side, texture)
+
+func getTextureSize() -> int:
+	return $VoxelEditor/VoxelWorld.call("GetTextureSize") 

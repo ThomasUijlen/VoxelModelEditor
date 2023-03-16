@@ -1,0 +1,56 @@
+[gd_scene load_steps=4 format=3 uid="uid://dvy2svjduowly"]
+
+[ext_resource type="Texture2D" uid="uid://cth5gxyhild5k" path="res://Assets/Textures/Plus.png" id="1_3cejk"]
+[ext_resource type="PackedScene" uid="uid://dsfq2ry7kv1kf" path="res://Scenes/UI/VoxelTypeList/voxel_type_list.tscn" id="2_t0odg"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_edaj8"]
+content_margin_left = 15.0
+content_margin_top = 15.0
+content_margin_right = 15.0
+content_margin_bottom = 15.0
+bg_color = Color(0.196078, 0.196078, 0.196078, 0.560784)
+
+[node name="ToolData" type="Node2D"]
+
+[node name="Data" type="RichTextLabel" parent="."]
+offset_left = 32.0
+offset_top = 107.0
+offset_right = 337.0
+offset_bottom = 176.0
+theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/bold_font_size = 17
+theme_override_font_sizes/italics_font_size = 16
+theme_override_styles/normal = SubResource("StyleBoxFlat_edaj8")
+bbcode_enabled = true
+text = "test"
+fit_content = true
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(960, 540)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("1_3cejk")
+
+[node name="Sprite2D2" type="Sprite2D" parent="."]
+visible = false
+position = Vector2(960, 540)
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("1_3cejk")
+
+[node name="VoxelList" type="VBoxContainer" parent="."]
+visible = false
+offset_left = 760.0
+offset_top = 97.0
+offset_right = 1160.0
+offset_bottom = 982.0
+
+[node name="Name" type="Label" parent="VoxelList"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Voxel Types"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="VoxelTypeList" parent="VoxelList" instance=ExtResource("2_t0odg")]
+layout_mode = 2
+autoSelect = false

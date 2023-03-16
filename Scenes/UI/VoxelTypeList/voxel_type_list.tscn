@@ -1,0 +1,102 @@
+[gd_scene load_steps=7 format=3 uid="uid://dsfq2ry7kv1kf"]
+
+[ext_resource type="Script" path="res://Scenes/UI/VoxelTypeList/voxel_type_list.gd" id="1_f56w5"]
+[ext_resource type="Texture2D" uid="uid://bin4g2spk172q" path="res://Textures/Stone.png" id="1_fdnie"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_b1boj"]
+bg_color = Color(0.156863, 0.156863, 0.156863, 1)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_blpok"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gffs6"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
+bg_color = Color(1, 1, 1, 0.2)
+
+[sub_resource type="GDScript" id="GDScript_qtql7"]
+script/source = "extends PanelContainer
+
+signal blockTypeSelected(name)
+
+var mouseEntered = false
+
+var api : VoxelAPI
+
+func _ready():
+	api = get_tree().current_scene
+
+func prepare():
+	$Container/Texture.texture = ImageTexture.create_from_image(api.getTexture(name, VoxelAPI.SIDE.TOP))
+	$Container/Name.text = name
+
+func _on_mouse_entered():
+	mouseEntered = true
+
+func _on_mouse_exited():
+	mouseEntered = false
+
+func _input(event):
+	if event.is_action_pressed(\"MouseLeft\"):
+		if !mouseEntered: return
+		emit_signal(\"blockTypeSelected\", name)
+
+func _exit_tree():
+	mouseEntered = false
+
+func _on_visibility_changed():
+	if !is_visible_in_tree(): mouseEntered = false
+"
+
+[node name="VoxelTypeList" type="ScrollContainer"]
+custom_minimum_size = Vector2(400, 850)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_b1boj")
+script = ExtResource("1_f56w5")
+normalStyle = SubResource("StyleBoxEmpty_blpok")
+selectedStyle = SubResource("StyleBoxFlat_gffs6")
+
+[node name="TypeList" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Air" type="PanelContainer" parent="TypeList"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxEmpty_blpok")
+script = SubResource("GDScript_qtql7")
+
+[node name="Container" type="HBoxContainer" parent="TypeList/Air"]
+layout_mode = 2
+
+[node name="Texture" type="TextureRect" parent="TypeList/Air/Container"]
+texture_filter = 1
+custom_minimum_size = Vector2(75, 75)
+layout_mode = 2
+texture = ExtResource("1_fdnie")
+
+[node name="Control" type="Control" parent="TypeList/Air/Container"]
+custom_minimum_size = Vector2(30, 0)
+layout_mode = 2
+
+[node name="Name" type="Label" parent="TypeList/Air/Container"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Air"
+clip_text = true
+
+[connection signal="visibility_changed" from="." to="." method="_on_visibility_changed"]
+[connection signal="mouse_entered" from="TypeList/Air" to="TypeList/Air" method="_on_mouse_entered"]
+[connection signal="mouse_exited" from="TypeList/Air" to="TypeList/Air" method="_on_mouse_exited"]
+[connection signal="visibility_changed" from="TypeList/Air" to="TypeList/Air" method="_on_visibility_changed"]

@@ -39,6 +39,8 @@ public partial class VoxelRenderer : Node3D
 			meshes.Enqueue(multiMeshInstance);
 			meshList.Add(multiMeshInstance);
 		}
+
+		BlockLibrary.renderers.Add(this);
 	}
 
 	float timer = 0.0f;
@@ -81,7 +83,8 @@ public partial class VoxelRenderer : Node3D
 	}
 
 	bool changePending = false;
-	public void RequestUpdate(Block[,,] grid, bool close = true) {
+	public void RequestUpdate(bool close = true) {
+		if(!IsInsideTree()) return;
 		if(!close) poolType = VoxelMain.POOL_TYPE.RENDERING;
 		
 		if(activeState == STATE.IDLE) {

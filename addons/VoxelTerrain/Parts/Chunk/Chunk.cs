@@ -122,7 +122,7 @@ public partial class Chunk
     public void Update(bool fromBlock = true) {
         if(!automaticUpdating) return;
         CreateVoxelRenderer();
-        voxelRenderer?.RequestUpdate(grid, fromBlock);
+        voxelRenderer?.RequestUpdate(fromBlock);
     }
 
     static Vector3[] neighbours = new Vector3[] {

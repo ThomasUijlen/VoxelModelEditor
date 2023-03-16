@@ -12,6 +12,7 @@ func _process(delta):
 	move(delta)
 
 func move(delta):
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED: return
 	var localMovement = Vector3.ZERO
 	var globalMovement = Vector3.ZERO
 	
@@ -30,7 +31,7 @@ func move(delta):
 	global_position += totalMovement
 
 func _input(event):
-	if event is InputEventMouseMotion:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var motion = event.relative*0.01
 		
 		cameraRotation.x -= motion.y*mouseSensitivity*0.8

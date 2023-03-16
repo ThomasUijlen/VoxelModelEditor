@@ -1,0 +1,81 @@
+[gd_scene load_steps=7 format=3 uid="uid://cnra7rb36qfu2"]
+
+[ext_resource type="Script" path="res://Scenes/UI/TextureUpload/texture_upload.gd" id="1_f06jl"]
+[ext_resource type="Texture2D" uid="uid://bin4g2spk172q" path="res://Textures/Stone.png" id="2_k6sht"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a18x7"]
+content_margin_left = 15.0
+content_margin_top = 15.0
+content_margin_right = 15.0
+content_margin_bottom = 15.0
+bg_color = Color(0.156863, 0.156863, 0.156863, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qyrob"]
+bg_color = Color(0.321569, 0.160784, 0.168627, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fdk2n"]
+bg_color = Color(0.321569, 0.160784, 0.168627, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g3dya"]
+bg_color = Color(0.321569, 0.160784, 0.168627, 1)
+
+[node name="TextureUpload" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_a18x7")
+script = ExtResource("1_f06jl")
+
+[node name="HBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Name" type="Label" parent="HBoxContainer"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Side: Top"
+
+[node name="Container" type="HBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="Texture" type="TextureRect" parent="HBoxContainer/Container"]
+texture_filter = 1
+custom_minimum_size = Vector2(75, 75)
+layout_mode = 2
+texture = ExtResource("2_k6sht")
+
+[node name="Button" type="Button" parent="HBoxContainer/Container"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+focus_mode = 0
+text = "Upload Texture"
+
+[node name="Clear" type="Button" parent="HBoxContainer/Container"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+focus_mode = 0
+theme_override_styles/normal = SubResource("StyleBoxFlat_qyrob")
+theme_override_styles/hover = SubResource("StyleBoxFlat_fdk2n")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_g3dya")
+text = "Clear"
+
+[node name="Control" type="Control" parent="HBoxContainer/Container"]
+custom_minimum_size = Vector2(30, 0)
+layout_mode = 2
+
+[node name="FileDialog" type="FileDialog" parent="HBoxContainer/Container"]
+initial_position = 2
+title = "Open a File"
+size = Vector2i(800, 500)
+mode = 3
+ok_button_text = "Upload"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.png, *.jpg, *.jpeg ; Supported Images")
+
+[connection signal="pressed" from="HBoxContainer/Container/Button" to="." method="_on_button_pressed"]
+[connection signal="pressed" from="HBoxContainer/Container/Clear" to="." method="_on_clear_pressed"]
+[connection signal="file_selected" from="HBoxContainer/Container/FileDialog" to="." method="_on_file_dialog_file_selected"]

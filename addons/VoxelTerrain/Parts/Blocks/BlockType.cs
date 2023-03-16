@@ -6,7 +6,7 @@ using System.Linq;
 namespace VoxelPlugin {
 
 public partial class BlockType : Resource {
-	private Dictionary<SIDE, BlockTexture> textures = new Dictionary<SIDE, BlockTexture>();
+	public Dictionary<SIDE, BlockTexture> textures = new Dictionary<SIDE, BlockTexture>();
 	public Dictionary<SIDE, BlockTexture> textureTable = new Dictionary<SIDE, BlockTexture>() {
 		{SIDE.TOP, null},
 		{SIDE.BOTTOM, null},
@@ -73,18 +73,22 @@ public class BlockTexture {
 		texture = Image.Create(size, size, true, Image.Format.Rgba8);
 
 		for(int x = 0; x < size; x++) {
-			// int offSet = 0;
-			// if(x % 2 == 0) offSet = 1;
-
 			for(int y = 0; y < size; y++) {
 				texture.SetPixel(x, y, new Color(1,1,1));
-				// if((y + offSet) % 2 == 0) {
-				// 	texture.SetPixel(x, y, new Color(1,1,1));
-				// } else {
-				// 	texture.SetPixel(x, y, new Color(0.2f,0.2f,0.2f));
-				// }
 			}
 		}
+	}
+
+	public string GetData() {
+		Image duplicate = (Image) texture.Duplicate();
+		int size = duplicate.GetSize().X;
+		for(int x = 0; x < size; x++) {
+			for(int y = 0; y < size; y++) {
+				duplicate.SetPixel(x, y, duplicate.GetPixel(x,y)*owner.modulate);
+			}
+		}
+
+		return BitConverter.ToString(duplicate.GetData());
 	}
 
 	public BlockTexture(BlockType owner, Image texture) {

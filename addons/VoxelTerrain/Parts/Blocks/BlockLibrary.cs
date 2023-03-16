@@ -6,7 +6,8 @@ using System.Linq;
 namespace VoxelPlugin {
 public static class BlockLibrary {
 	public static Mesh voxelMesh = GD.Load<Mesh>("res://addons/VoxelTerrain/Parts/Blocks/Mesh/VoxelFace.tres");
-	static Dictionary<string, BlockType> blockTypes = new Dictionary<string, BlockType>();
+	public static Dictionary<string, BlockType> blockTypes = new Dictionary<string, BlockType>();
+	public static List<VoxelRenderer> renderers = new List<VoxelRenderer>();
 
 	public static Image textureAtlas;
 	public static ImageTexture texture;
@@ -31,13 +32,28 @@ public static class BlockLibrary {
 		return null;
 	}
 
+	static public void SetTexture(string name, SIDE side, Image texture) {
+		if(!blockTypes.ContainsKey(name)) return;
+		BlockType type = blockTypes[name];
+		BlockTexture blockTexture = null;
+		
+		if(texture != null) {
+			blockTexture = new BlockTexture(type, texture);
+		} else {
+			blockTexture = new BlockTexture(type, textureWidth);
+		}
+		type.textureTable[side] = blockTexture;
+		type.textures[side] = blockTexture;
+		ConstructTextureAtlas();
+	}
+
 	static private void ConstructTextureAtlas() {
 		//Extract all textures from the BlockTypes. Sort textures into the same list if they are duplicate.
 		Dictionary<string, List<BlockTexture>> textures = new Dictionary<string, List<BlockTexture>>();
 		foreach(BlockType blockType in blockTypes.Values) {
 			List<BlockTexture> blockTextures = blockType.GetAllTextures();
 			foreach(BlockTexture blockTexture in blockTextures) {
-				string id = BitConverter.ToString(blockTexture.texture.GetData());
+				string id = blockTexture.GetData();
 				if(!textures.ContainsKey(id)) textures.Add(id, new List<BlockTexture>());
 				textures[id].Add(blockTexture);
 			}
@@ -66,6 +82,7 @@ public static class BlockLibrary {
 		Material voxelMaterial = voxelMesh.SurfaceGetMaterial(0);
 		voxelMaterial.Set("shader_parameter/textureAtlas", BlockLibrary.texture);
 		voxelMaterial.Set("shader_parameter/atlasScale", BlockLibrary.atlasScale);
+		UpdateRenderers();
 	}
 
 	static private void ApplyTexture(Vector2I origin, int atlasWidth, float totalSize, BlockTexture blockTexture) {
@@ -88,6 +105,10 @@ public static class BlockLibrary {
 
 		if(textureCount > atlasSize) return CalculateAtlasSize(textureCount, width+1);
 		return width;
+	}
+
+	static private void UpdateRenderers() {
+		foreach(VoxelRenderer renderer in renderers) renderer.RequestUpdate();
 	}
 }
 }
