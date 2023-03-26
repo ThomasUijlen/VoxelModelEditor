@@ -54,9 +54,10 @@ func sideToStr(side : SIDE) -> String:
 			return "Front"
 	return ""
 
-func setBlock(coord : Vector3, name : String):
+func setBlock(coord : Vector3, name : String, save : bool = true):
 	changed = true
 	$VoxelEditor/VoxelWorld.call("SetBlock", coord, name)
+	if save: $VersionManager.addChange(coord, name)
 
 func getBlockType(coord : Vector3) -> String:
 	return $VoxelEditor/VoxelWorld.call("GetBlockType", coord)

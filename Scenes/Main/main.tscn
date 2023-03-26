@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://2stv70gchvjv"]
+[gd_scene load_steps=14 format=3 uid="uid://2stv70gchvjv"]
 
 [ext_resource type="Script" path="res://Scenes/Main/VoxelAPI.gd" id="1_6mhgk"]
 [ext_resource type="PackedScene" uid="uid://b0hqcmmdm8g2v" path="res://Scenes/Main/VoxelEditor.tscn" id="2_p1p6f"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://Scenes/Main/MenuButton.gd" id="4_x47y6"]
 [ext_resource type="PackedScene" uid="uid://byxtmw3ptkd42" path="res://Scenes/Main/voxel_creator.tscn" id="5_t8pwt"]
 [ext_resource type="PackedScene" uid="uid://dkfuikb2xdbau" path="res://Scenes/Main/project_file.tscn" id="6_nbnji"]
+[ext_resource type="Script" path="res://Scenes/Main/VersionManager.gd" id="7_jjeiq"]
 
 [sub_resource type="PhysicalSkyMaterial" id="PhysicalSkyMaterial_5kjyb"]
 energy_multiplier = 3.0
@@ -108,3 +109,6 @@ visible = false
 
 [node name="ProjectFile" parent="." instance=ExtResource("6_nbnji")]
 visible = false
+
+[node name="VersionManager" type="Node" parent="."]
+script = ExtResource("7_jjeiq")
