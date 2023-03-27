@@ -16,9 +16,6 @@ enum SIDE {
 	BACK = 1 << 6
 }
 
-func _enter_tree():
-	createBlockType("Default", null, Color.WHITE_SMOKE)
-
 func _ready():
 	camera = get_viewport().get_camera_3d()
 
@@ -85,3 +82,19 @@ func setTexture(name : String, side : SIDE, texture : Image):
 
 func getTextureSize() -> int:
 	return $VoxelEditor/VoxelWorld.call("GetTextureSize") 
+
+func getAllQuads() -> Array:
+	return $VoxelEditor/VoxelWorld.call("GetAllQuads")
+
+func getTextureSettings() -> Dictionary:
+	return $VoxelEditor/VoxelWorld.call("GetTextureSettings")
+
+func setTextureSettings(settings : Dictionary):
+	return $VoxelEditor/VoxelWorld.call("SetTextureSettings", settings)
+
+func setVersion(version : Dictionary):
+	$VersionManager.applyVersion(version)
+	$VersionManager.changed = true
+
+func getVersion() -> Dictionary:
+	return $VersionManager.currentVersion

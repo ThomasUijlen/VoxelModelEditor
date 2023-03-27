@@ -17,6 +17,7 @@ public static class BlockLibrary {
 
 	static BlockLibrary() {
 		AddBlockType("Air", new BlockType(new Color(1,1,1,0), textureWidth, true));
+		AddBlockType("Default", new BlockType(new Color(1,1,1), textureWidth));
 		GetBlockType("Air").rendered = false;
 	}
 
@@ -52,6 +53,27 @@ public static class BlockLibrary {
 		BlockType type = blockTypes[name];
 		type.modulate = modulate;
 		ConstructTextureAtlas();
+	}
+
+	static public Godot.Collections.Dictionary GetTexturesAsDictionary() {
+		Godot.Collections.Dictionary textures = new Godot.Collections.Dictionary();
+
+		foreach(KeyValuePair<string, BlockType> keyValuePair in blockTypes) {
+			textures[keyValuePair.Key] = keyValuePair.Value.GetTexturesAsDictionary();
+		}
+
+		return textures;
+	}
+
+	static public void SetTexturesFromDictionary(Godot.Collections.Dictionary settings) {
+		blockTypes.Clear();
+
+		foreach(KeyValuePair<Variant, Variant> keyValuePair in settings) {
+			string name = (string) keyValuePair.Key;
+			BlockType blockType = new BlockType(new Color(1,1,1,0), textureWidth, false);
+			blockType.SetTexturesFromDictionary((Godot.Collections.Dictionary) keyValuePair.Value);
+			AddBlockType(name, blockType);
+		}
 	}
 
 	static private void ConstructTextureAtlas() {
