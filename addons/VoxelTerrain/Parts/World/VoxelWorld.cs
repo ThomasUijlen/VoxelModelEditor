@@ -84,6 +84,20 @@ public partial class VoxelWorld : Node3D
 		return BlockLibrary.textureWidth;
 	}
 
+	public Godot.Collections.Array GetAllQuads() {
+		Godot.Collections.Array quads = new Godot.Collections.Array();
+		foreach(VoxelRenderer render in BlockLibrary.renderers) render.GetQuads(quads);
+		return quads;
+	}
+
+	public Godot.Collections.Dictionary GetTextureSettings() {
+		return BlockLibrary.GetTexturesAsDictionary();
+	}
+
+	public void SetTextureSettings(Godot.Collections.Dictionary settings) {
+		BlockLibrary.SetTexturesFromDictionary(settings);
+	}
+
 
 
 

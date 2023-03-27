@@ -109,6 +109,7 @@ public partial class VoxelRenderer : Node3D
 
 		RenderingServer.InstanceSetVisible(newMeshInstance.instance, true);
 		RenderingServer.InstanceSetVisible(oldMeshInstance.instance, false);
+		RenderingServer.MultimeshSetVisibleInstances(oldMeshInstance.mesh, 0);
 
 		meshes.Enqueue(oldMeshInstance);
 		meshes.Enqueue(newMeshInstance);
@@ -225,9 +226,20 @@ public partial class VoxelRenderer : Node3D
 			);
 
 			//Color color = new Color(rng.RandfRange(0f,1f),rng.RandfRange(0f,1f),rng.RandfRange(0f,1f));
-
 			RenderingServer.MultimeshInstanceSetTransform(meshInstance.mesh, i, transform);
 			RenderingServer.MultimeshInstanceSetColor(meshInstance.mesh, i, color);
+		}
+	}
+
+	public void GetQuads(Godot.Collections.Array quads) {
+		foreach(MeshInstance mesh in meshList) {
+			for(int i = 0; i < RenderingServer.MultimeshGetVisibleInstances(mesh.mesh); i ++) {
+				Godot.Collections.Array values = new Godot.Collections.Array();
+				values.Add(RenderingServer.MultimeshInstanceGetTransform(mesh.mesh, i));
+				values.Add(RenderingServer.MultimeshInstanceGetColor(mesh.mesh, i));
+				values.Add(RenderingServer.MultimeshInstanceGetCustomData(mesh.mesh, i));
+				quads.Add(values);
+			}
 		}
 	}
 

@@ -29,6 +29,7 @@ func _ready():
 
 func _on_file_dialog_file_selected(path):
 	var image : Image = Image.load_from_file(path)
+	image.convert(Image.FORMAT_RGBA8)
 	if image == null: return
 	var textureSize = api.getTextureSize()
 	image.resize(textureSize, textureSize)
