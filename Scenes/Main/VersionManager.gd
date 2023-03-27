@@ -15,7 +15,6 @@ func _process(delta):
 	
 	changed = false
 	while versions.size()-1 > versionI:
-		print("popopo")
 		versions.pop_back()
 	
 	versions.append(currentVersion.duplicate())
