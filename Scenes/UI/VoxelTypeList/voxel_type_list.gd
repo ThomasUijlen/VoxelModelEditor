@@ -18,7 +18,7 @@ func _ready():
 		emptyLabel = $TypeList/Air
 		%TypeList.remove_child(emptyLabel)
 
-func refreshTypeList():
+func refreshTypeList(select : bool = true):
 	var blockTypes : Array = api.getBlockTypes()
 	
 	for child in %TypeList.get_children():
@@ -32,11 +32,12 @@ func refreshTypeList():
 		label.name = type
 		label.prepare()
 	
-	if autoSelect:
-		if blockTypes.has(selected):
-			blockTypeSelected(selected)
-		else:
-			blockTypeSelected(blockTypes[1])
+	if select:
+		if autoSelect:
+			if blockTypes.has(selected):
+				blockTypeSelected(selected)
+			else:
+				blockTypeSelected(blockTypes[1])
 
 func blockTypeSelected(name):
 	selected = name

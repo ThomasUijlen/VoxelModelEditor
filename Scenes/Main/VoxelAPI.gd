@@ -77,6 +77,9 @@ func getTexture(name : String, side : SIDE) -> Image:
 func getModulate(name : String) -> Color:
 	return $VoxelEditor/VoxelWorld.call("GetModulate", name)
 
+func setModulate(name : String, modulate : Color):
+	$VoxelEditor/VoxelWorld.call("SetModulate", name, modulate)
+
 func setTexture(name : String, side : SIDE, texture : Image):
 	$VoxelEditor/VoxelWorld.call("SetTexture", name, side, texture)
 

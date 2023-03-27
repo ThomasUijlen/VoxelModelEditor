@@ -38,11 +38,13 @@ func _input(event):
 	if event.is_action_pressed("Undo"):
 		if versionI == 0: return
 		versionI -= 1
+		changed = false
 		applyVersion(versions[versionI])
 		currentVersion = versions[versionI]
 	
 	if event.is_action_pressed("Redo"):
 		if versionI == versions.size()-1: return
 		versionI += 1
+		changed = false
 		applyVersion(versions[versionI])
 		currentVersion = versions[versionI]

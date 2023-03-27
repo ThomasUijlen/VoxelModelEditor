@@ -59,6 +59,10 @@ public partial class VoxelWorld : Node3D
 		return type.modulate;
 	}
 
+	public void SetModulate(String rawName, Color modulate) {
+		BlockLibrary.SetModulate(rawName, modulate);
+	}
+
 	public void SetTexture(String rawName, SIDE side, Image texture) {
 		BlockLibrary.SetTexture(rawName, side, texture);
 	}
