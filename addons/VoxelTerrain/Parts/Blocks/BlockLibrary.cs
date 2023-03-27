@@ -47,6 +47,13 @@ public static class BlockLibrary {
 		ConstructTextureAtlas();
 	}
 
+	static public void SetModulate(String name, Color modulate) {
+		if(!blockTypes.ContainsKey(name)) return;
+		BlockType type = blockTypes[name];
+		type.modulate = modulate;
+		ConstructTextureAtlas();
+	}
+
 	static private void ConstructTextureAtlas() {
 		//Extract all textures from the BlockTypes. Sort textures into the same list if they are duplicate.
 		Dictionary<string, List<BlockTexture>> textures = new Dictionary<string, List<BlockTexture>>();

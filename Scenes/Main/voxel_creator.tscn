@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://byxtmw3ptkd42"]
+[gd_scene load_steps=12 format=3 uid="uid://byxtmw3ptkd42"]
 
 [ext_resource type="Script" path="res://Scenes/Main/voxel_creator.gd" id="1_ejpk5"]
 [ext_resource type="PackedScene" uid="uid://dsfq2ry7kv1kf" path="res://Scenes/UI/VoxelTypeList/voxel_type_list.tscn" id="2_0tvr6"]
@@ -10,6 +10,13 @@ bg_color = Color(0.0941176, 0.0941176, 0.0941176, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_scol3"]
 bg_color = Color(0.156863, 0.290196, 0.156863, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o5jkg"]
+content_margin_left = 15.0
+content_margin_top = 15.0
+content_margin_right = 15.0
+content_margin_bottom = 15.0
+bg_color = Color(0.156863, 0.156863, 0.156863, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ko6bh"]
 bg_color = Color(0.0784314, 0.0784314, 0.0784314, 1)
@@ -72,6 +79,55 @@ layout_mode = 2
 [node name="VoxelSettings" type="HBoxContainer" parent="Container/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="ColorPicker" type="VBoxContainer" parent="Container/HBoxContainer/VoxelSettings"]
+layout_mode = 2
+
+[node name="Control" type="Control" parent="Container/HBoxContainer/VoxelSettings/ColorPicker"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="Name" type="Label" parent="Container/HBoxContainer/VoxelSettings/ColorPicker"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Color"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="Panel" type="PanelContainer" parent="Container/HBoxContainer/VoxelSettings/ColorPicker"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_o5jkg")
+
+[node name="ColorPicker" type="ColorPicker" parent="Container/HBoxContainer/VoxelSettings/ColorPicker/Panel"]
+unique_name_in_owner = true
+layout_mode = 2
+edit_alpha = false
+can_add_swatches = false
+sampler_visible = false
+color_modes_visible = false
+presets_visible = false
+
+[node name="Control2" type="Control" parent="Container/HBoxContainer/VoxelSettings/ColorPicker"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="Name2" type="Label" parent="Container/HBoxContainer/VoxelSettings/ColorPicker"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 20
+text = "Quick Texture Override"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="QuickTexture" parent="Container/HBoxContainer/VoxelSettings/ColorPicker" instance=ExtResource("3_agu6b")]
+unique_name_in_owner = true
+layout_mode = 2
+side = 1
+
+[node name="Control" type="Control" parent="Container/HBoxContainer/VoxelSettings"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
 
 [node name="Textures" type="VBoxContainer" parent="Container/HBoxContainer/VoxelSettings"]
 unique_name_in_owner = true
@@ -179,5 +235,13 @@ text = "Cancel"
 
 [connection signal="pressed" from="Container/HBoxContainer/CenterContainer/VBoxContainer/HBoxContainer/PanelContainer/Add" to="." method="_on_add_pressed"]
 [connection signal="typeSelected" from="Container/HBoxContainer/CenterContainer/VBoxContainer/VoxelTypeList" to="." method="_on_voxel_type_list_type_selected"]
+[connection signal="color_changed" from="Container/HBoxContainer/VoxelSettings/ColorPicker/Panel/ColorPicker" to="." method="_on_color_picker_color_changed"]
+[connection signal="textureChanged" from="Container/HBoxContainer/VoxelSettings/ColorPicker/QuickTexture" to="." method="_on_texture_changed"]
+[connection signal="textureChanged" from="Container/HBoxContainer/VoxelSettings/Textures/TextureUpload" to="." method="_on_texture_changed"]
+[connection signal="textureChanged" from="Container/HBoxContainer/VoxelSettings/Textures/TextureUpload2" to="." method="_on_texture_changed"]
+[connection signal="textureChanged" from="Container/HBoxContainer/VoxelSettings/Textures/TextureUpload3" to="." method="_on_texture_changed"]
+[connection signal="textureChanged" from="Container/HBoxContainer/VoxelSettings/Textures/TextureUpload4" to="." method="_on_texture_changed"]
+[connection signal="textureChanged" from="Container/HBoxContainer/VoxelSettings/Textures/TextureUpload5" to="." method="_on_texture_changed"]
+[connection signal="textureChanged" from="Container/HBoxContainer/VoxelSettings/Textures/TextureUpload6" to="." method="_on_texture_changed"]
 [connection signal="pressed" from="NewVoxelPopup/PanelContainer/VBoxContainer/HBoxContainer2/Create" to="." method="_on_create_pressed"]
 [connection signal="pressed" from="NewVoxelPopup/PanelContainer/VBoxContainer/HBoxContainer2/Cancel" to="." method="_on_cancel_pressed"]
